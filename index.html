@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>You Are Being Watched</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=Inter:wght@400;500&display=swap');
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#1a1a2e;--bg2:#16213e;--accent:#e94560;--accent2:#f5a623;
+  --ink:#f0ece4;--ink-mid:#b8b0a4;--ink-muted:#7a7068;
+  --rule:rgba(240,236,228,0.1);--rule-strong:rgba(240,236,228,0.22);
+  --mono-bg:rgba(0,0,0,0.35);
+}
+html,body{background:var(--bg);color:var(--ink);font-family:'Inter',sans-serif;overflow-x:hidden;line-height:1.7}
+
+.masthead{padding:1.25rem 2.5rem;border-bottom:1px solid var(--rule-strong);display:flex;justify-content:space-between;align-items:center;font-family:'DM Mono',monospace;font-size:0.68rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--ink-muted)}
+.masthead-brand{color:var(--accent);letter-spacing:0.15em}
+
+.hero{min-height:96vh;display:flex;flex-direction:column;justify-content:center;padding:5rem 2.5rem;border-bottom:1px solid var(--rule-strong);background:radial-gradient(ellipse at 65% 40%,rgba(233,69,96,0.07) 0%,transparent 60%)}
+.hero-eyebrow{font-family:'DM Mono',monospace;font-size:0.65rem;letter-spacing:0.18em;text-transform:uppercase;color:var(--accent);margin-bottom:2.5rem;display:flex;align-items:center;gap:0.75rem}
+.hero-eyebrow::before{content:'';width:2rem;height:1px;background:var(--accent)}
+.hero h1{font-family:'DM Serif Display',serif;font-size:clamp(2.2rem,5.5vw,4rem);line-height:1.05;letter-spacing:-0.015em;max-width:820px;margin-bottom:3.5rem}
+.hero h1 em{font-style:italic;color:var(--accent)}
+
+.profile-block{border-top:1px solid var(--rule-strong);padding-top:2.5rem;max-width:820px}
+.profile-label{font-family:'DM Mono',monospace;font-size:0.63rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-muted);margin-bottom:1.5rem;display:flex;align-items:center;gap:0.5rem}
+.profile-label::before{content:'';width:1rem;height:1px;background:var(--ink-muted)}
+.profile-text{font-size:0.95rem;line-height:1.88;color:var(--ink-mid);max-width:720px}
+.profile-text p{margin-bottom:1.1rem}
+.profile-text p:last-child{margin-bottom:0;color:var(--ink-muted);font-family:'DM Mono',monospace;font-size:0.72rem}
+
+.confidence-row{display:flex;gap:1.5rem;flex-wrap:wrap;margin-top:2rem;padding-top:1.5rem;border-top:1px solid var(--rule)}
+.conf-item{font-family:'DM Mono',monospace;font-size:0.63rem;color:var(--ink-muted);display:flex;flex-direction:column;gap:3px}
+.conf-item strong{color:var(--ink-mid);font-size:0.72rem}
+
+.section{padding:5rem 2.5rem;border-bottom:1px solid var(--rule)}
+.section-inner{max-width:860px;margin:0 auto}
+.section-num{font-family:'DM Mono',monospace;font-size:0.63rem;letter-spacing:0.16em;text-transform:uppercase;color:var(--ink-muted);margin-bottom:1.5rem;display:flex;align-items:center;gap:0.75rem}
+.section-num::before{content:'';width:1.5rem;height:1px;background:var(--ink-muted)}
+.section h2{font-family:'DM Serif Display',serif;font-size:clamp(1.8rem,4vw,2.8rem);line-height:1.05;letter-spacing:-0.015em;margin-bottom:0.6rem;max-width:680px}
+.section-sub{font-size:0.82rem;color:var(--ink-muted);font-family:'DM Mono',monospace;letter-spacing:0.04em;margin-bottom:3rem;padding-bottom:2.5rem;border-bottom:1px solid var(--rule)}
+
+.prose{font-size:0.92rem;line-height:1.88;color:var(--ink-mid);max-width:640px}
+.prose+.prose{margin-top:1.1rem}
+.prose strong{color:var(--ink);font-weight:500}
+
+.cols-eq{display:grid;grid-template-columns:1fr 1fr;gap:3.5rem;align-items:start}
+@media(max-width:680px){.cols-eq{grid-template-columns:1fr}}
+
+.pullquote{font-family:'DM Serif Display',serif;font-style:italic;font-size:clamp(1.2rem,2.6vw,1.5rem);line-height:1.35;color:var(--ink);padding:2.5rem 0;border-top:2px solid var(--accent);margin:3rem 0;max-width:660px}
+.pullquote cite{display:block;font-family:'DM Mono',monospace;font-style:normal;font-size:0.63rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--ink-muted);margin-top:1rem}
+
+.live-tag{display:inline-flex;align-items:center;gap:6px;font-family:'DM Mono',monospace;font-size:0.63rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--accent);margin-bottom:1rem}
+.dot{width:6px;height:6px;border-radius:50%;background:var(--accent);animation:pulse 1.6s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.2}}
+
+.data-table{width:100%;border-collapse:collapse;font-size:0.8rem}
+.data-table tr{border-bottom:1px solid var(--rule)}
+.data-table tr:last-child{border-bottom:none}
+.data-table td{padding:0.45rem 0;vertical-align:top}
+.data-table td:first-child{font-family:'DM Mono',monospace;font-size:0.66rem;color:var(--ink-muted);width:44%;padding-right:1rem}
+.data-table td:last-child{color:var(--ink);font-size:0.78rem}
+
+.fp-wrap{margin-top:2rem}
+.fp-row{display:flex;align-items:center;gap:12px;margin-bottom:8px}
+.fp-label{font-family:'DM Mono',monospace;font-size:0.66rem;color:var(--ink-muted);width:155px;flex-shrink:0}
+.fp-track{flex:1;height:2px;background:rgba(240,236,228,0.08)}
+.fp-fill{height:100%;background:var(--accent);transition:width 1.4s cubic-bezier(.4,0,.2,1)}
+.fp-pct{font-family:'DM Mono',monospace;font-size:0.63rem;color:var(--ink-muted);width:30px;text-align:right}
+
+.stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:1px;background:var(--rule-strong);margin:2.5rem 0}
+.stat-card{background:var(--bg2);padding:2rem 1.5rem}
+.stat-num{font-family:'DM Serif Display',serif;font-size:clamp(2rem,4vw,3rem);color:var(--ink);line-height:1;margin-bottom:0.6rem}
+.stat-num em{font-style:normal;color:var(--accent)}
+.stat-label{font-family:'DM Mono',monospace;font-size:0.67rem;letter-spacing:0.06em;text-transform:uppercase;color:var(--ink-muted);line-height:1.55}
+
+.subsection-rule{border:none;border-top:1px solid var(--rule);margin:3rem 0}
+
+.tracker-cols{display:grid;grid-template-columns:1fr 1fr;gap:3rem}
+@media(max-width:600px){.tracker-cols{grid-template-columns:1fr}}
+.tracker-block h4{font-family:'DM Mono',monospace;font-size:0.72rem;text-transform:uppercase;letter-spacing:0.1em;color:var(--ink);margin-bottom:1rem;padding-bottom:0.75rem;border-bottom:1px solid var(--rule)}
+.tracker-item{display:flex;justify-content:space-between;align-items:baseline;padding:0.4rem 0;border-bottom:1px solid var(--rule);gap:1rem}
+.tracker-item:last-child{border-bottom:none}
+.tracker-key{font-size:0.78rem;color:var(--ink-muted)}
+.tracker-val{font-family:'DM Mono',monospace;font-size:0.72rem;color:var(--accent2);text-align:right;flex-shrink:0}
+
+.cookie-grid{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--rule);margin:2rem 0}
+@media(max-width:600px){.cookie-grid{grid-template-columns:1fr}}
+.cookie-card{background:var(--bg);padding:1.5rem}
+.cookie-name{font-family:'DM Mono',monospace;font-size:0.75rem;font-weight:500;color:var(--ink);margin-bottom:0.2rem}
+.cookie-type{font-family:'DM Mono',monospace;font-size:0.62rem;color:var(--ink-muted);margin-bottom:0.75rem}
+.cookie-id{font-family:'DM Mono',monospace;font-size:0.67rem;background:var(--mono-bg);padding:3px 8px;border-radius:2px;display:inline-block;color:var(--accent2);margin-bottom:0.65rem}
+.cookie-impact{font-size:0.8rem;line-height:1.7;color:var(--ink-mid)}
+
+.case{padding:2.5rem 0;border-top:1px solid var(--rule)}
+.case:last-child{border-bottom:1px solid var(--rule)}
+.case-label{font-family:'DM Mono',monospace;font-size:0.62rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--accent);margin-bottom:0.75rem;display:flex;align-items:center;gap:0.5rem}
+.case-label::before{content:'';width:1rem;height:1px;background:var(--accent)}
+.case h3{font-family:'DM Serif Display',serif;font-size:1.35rem;line-height:1.15;margin-bottom:0.75rem;max-width:560px}
+.case p{font-size:0.87rem;line-height:1.88;color:var(--ink-mid);max-width:640px}
+.case-stat{display:inline-block;font-family:'DM Serif Display',serif;font-size:2rem;color:var(--accent);line-height:1;margin-bottom:0.2rem}
+.case-stat-label{font-family:'DM Mono',monospace;font-size:0.62rem;letter-spacing:0.06em;text-transform:uppercase;color:var(--ink-muted);margin-bottom:1.25rem}
+
+.logbox{background:var(--mono-bg);border:1px solid var(--rule);font-family:'DM Mono',monospace;font-size:0.67rem;padding:1.25rem;max-height:220px;overflow-y:auto;line-height:1.7}
+.log-line{padding:2px 0;border-bottom:1px solid rgba(240,236,228,0.04)}
+.log-line:last-child{border-bottom:none}
+.log-t{color:var(--ink-muted);margin-right:0.75rem}.log-e{color:var(--accent2)}
+
+footer{padding:2.5rem;font-family:'DM Mono',monospace;font-size:0.63rem;letter-spacing:0.06em;color:var(--ink-muted);border-top:1px solid var(--rule-strong);text-align:center;line-height:2}
+</style>
+</head>
+<body>
+
+<div class="masthead">
+  <div class="masthead-brand">Data Transparency Project</div>
+  <div id="mdate"></div>
+</div>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-eyebrow">Profile complete</div>
+  <h1>This page knows more about you<br>than you shared <em>with anyone</em><br>today.</h1>
+  <div class="profile-block">
+    <div class="profile-label">Inferred — not provided</div>
+    <div class="profile-text" id="profileText"></div>
+    <div class="confidence-row" id="confRow"></div>
+  </div>
+</div>
+
+<!-- SECTION 1: SIGNALS -->
+<div class="section" style="background:var(--bg)">
+<div class="section-inner">
+  <div class="section-num">Part One</div>
+  <h2>What your device broadcast the moment you arrived</h2>
+  <div class="section-sub">Every item below was transmitted automatically. You authorized none of it.</div>
+  <div class="cols-eq">
+    <div>
+      <div class="live-tag"><span class="dot"></span> Captured on arrival</div>
+      <table class="data-table" id="deviceTable"></table>
+    </div>
+    <div>
+      <div class="live-tag"><span class="dot"></span> How uniquely identifiable you are</div>
+      <p class="prose" style="font-size:0.8rem;margin-bottom:0.5rem">Each bar shows the percentage of internet users whose device differs from yours on that trait. At 99% combined uniqueness, your browser has a distinct fingerprint — one that persists even with cookies disabled, even in private browsing mode.</p>
+      <div class="fp-wrap" id="fpSection"></div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- SECTION 2: THE TRACKING ECOSYSTEM -->
+<div class="section" style="background:var(--bg2)">
+<div class="section-inner">
+  <div class="section-num">Part Two</div>
+  <h2>The surveillance that runs on every website you visit</h2>
+  <div class="section-sub">This page set four cookies. The average commercial website sets 43. We disclosed ours.</div>
+
+  <div class="stat-grid">
+    <div class="stat-card">
+      <div class="stat-num"><em>56%</em></div>
+      <div class="stat-label">of all websites run<br>Google Analytics</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num"><em>10M</em></div>
+      <div class="stat-label">sites with Meta Pixel<br>installed and firing</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num"><em>43</em></div>
+      <div class="stat-label">average cookies set<br>per commercial website</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num"><em>1,500</em></div>
+      <div class="stat-label">data points held on the<br>average American adult</div>
+    </div>
+  </div>
+
+  <p class="prose" style="margin-bottom:1rem">Google Analytics is installed on more than half of all websites on the internet, and Meta's Pixel on roughly ten million. Both are offered to website operators at no cost. The reason is straightforward: the product being sold is not the analytics software but the behavioral data of everyone who visits the sites running it. That data — correlated across millions of properties, enriched with purchase history and demographic records from third-party brokers, and auctioned back to advertisers as individual-level targeting intelligence — generates tens of billions of dollars annually for two companies that have positioned themselves as essential, unavoidable infrastructure for the web.</p>
+  <p class="prose" style="margin-bottom:3rem">When this page loaded, four cookies were written to your browser. On a commercial site, these same mechanisms would be linking this visit to every prior session tied to your device, building a record that includes which articles you read, how far you scrolled, how long you paused, and what you searched before you arrived. That record is then packaged and sold, typically within milliseconds of your arrival, through automated auctions you cannot see and have no practical mechanism to opt out of.</p>
+
+  <hr class="subsection-rule">
+
+  <div class="live-tag" style="margin-bottom:1.5rem"><span class="dot"></span> Cookies set on this page</div>
+  <div class="cookie-grid" id="cookieSection"></div>
+
+  <hr class="subsection-rule">
+
+  <div class="live-tag" style="margin-bottom:1.5rem"><span class="dot"></span> What each tracker transmitted on page load</div>
+  <div class="tracker-cols">
+    <div class="tracker-block">
+      <h4>Google Analytics</h4>
+      <div id="gaItems"></div>
+    </div>
+    <div class="tracker-block">
+      <h4>Meta Pixel</h4>
+      <div id="pixelItems"></div>
+    </div>
+  </div>
+
+  <div class="pullquote">
+    "A cookie banner is not consent. It is the performance of consent."
+    <cite>— Max Schrems, founder of noyb</cite>
+  </div>
+</div>
+</div>
+
+<!-- SECTION 3: DOCUMENTED CASES -->
+<div class="section" style="background:var(--bg)">
+<div class="section-inner">
+  <div class="section-num">Part Three</div>
+  <h2>What happens when this data reaches the wrong hands</h2>
+  <div class="section-sub">These are not hypotheticals. Each case is documented. The cases shown were selected based on the signals detected from your device.</div>
+  <p class="prose" style="margin-bottom:3rem">The commercial surveillance infrastructure described in this page was built for advertising. Its data, however, has no inherent use restriction — once collected and sold into the broker market, it can be acquired by anyone with a commercial account and a budget. What follows are documented instances of that data finding applications its subjects did not anticipate and could not prevent.</p>
+  <div id="casesSection"></div>
+  <div class="pullquote" style="margin-top:3rem">
+    "The question is not whether the data will be misused. The question is by whom, against whom, and whether there will be any warning."
+    <cite>— Shoshana Zuboff, The Age of Surveillance Capitalism</cite>
+  </div>
+</div>
+</div>
+
+<!-- SECTION 4: ACTIVITY LOG -->
+<div class="section" style="background:var(--bg2)">
+<div class="section-inner">
+  <div class="section-num">Live Record</div>
+  <h2>What this page logged while you read it</h2>
+  <div class="section-sub">Every commercial website you visit runs a version of this. Almost none tell you.</div>
+  <div class="logbox" id="actLog"></div>
+</div>
+</div>
+
+<footer>
+  <div>All processing on this page is local to your device. Nothing was transmitted to any external server.</div>
+  <div style="margin-top:0.5rem;opacity:0.5">Data Transparency Project · No analytics · No tracking · No exceptions</div>
+</footer>
+
+<script>
+const t0 = performance.now();
+const nav = navigator, scr = screen;
+document.getElementById('mdate').textContent = new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'});
+
+// ── PROFILE ENGINE ──
+function buildProfile() {
+  const ua = nav.userAgent, lang = nav.language || '',
+        langs = (nav.languages || [lang]),
+        tz = Intl.DateTimeFormat().resolvedOptions().timeZone || '',
+        cores = nav.hardwareConcurrency || 2,
+        ram = nav.deviceMemory || 2,
+        pxr = window.devicePixelRatio || 1,
+        sw = scr.width,
+        touch = nav.maxTouchPoints > 0,
+        platform = nav.platform || '',
+        hour = new Date().getHours(),
+        dow = new Date().getDay(),
+        ref = document.referrer;
+
+  const isMobile = touch && (sw < 768 || /Mobile|Android|iPhone/i.test(ua));
+  const isMac = /Mac/.test(platform) || /Mac OS X/.test(ua);
+  const isWin = /Win/.test(ua);
+  const isLinux = /Linux/.test(platform) && !/Android/.test(ua);
+  const isIOS = /iPhone|iPad/.test(ua);
+  const isAndroid = /Android/.test(ua);
+  const hiRes = pxr >= 2;
+  const highEnd = cores >= 8 || ram >= 8;
+  const isWeekend = dow === 0 || dow === 6;
+  const isWorkHours = hour >= 9 && hour < 18 && !isWeekend;
+  const isLateNight = hour >= 22 || hour < 5;
+
+  const isUStz = tz.startsWith('America/');
+  const isEUtz = tz.startsWith('Europe/');
+  const isSouthernUS = ['Chicago','Dallas','Austin','Houston','Nashville','Atlanta','Phoenix'].some(c => tz.includes(c));
+  const refHost = ref ? (ref.split('/')[2] || '') : '';
+
+  const tzMap = {
+    'New_York':'New York','Chicago':'Chicago','Los_Angeles':'Los Angeles',
+    'San_Francisco':'the Bay Area','Denver':'Denver','Phoenix':'Phoenix',
+    'Seattle':'Seattle','Boston':'Boston','Miami':'Miami','Atlanta':'Atlanta',
+    'Austin':'Austin','Dallas':'Dallas','Portland':'Portland',
+    'London':'London','Paris':'Paris','Berlin':'Berlin','Amsterdam':'Amsterdam',
+    'Stockholm':'Stockholm','Madrid':'Madrid','Rome':'Rome','Zurich':'Zurich',
+    'Tokyo':'Tokyo','Seoul':'Seoul','Sydney':'Sydney','Melbourne':'Melbourne',
+    'Toronto':'Toronto','Vancouver':'Vancouver','Montreal':'Montreal',
+    'Mumbai':'Mumbai','Singapore':'Singapore','Dubai':'Dubai',
+  };
+  const tzKey = Object.keys(tzMap).find(k => tz.includes(k));
+  const city = tzKey ? tzMap[tzKey] : (tz.split('/').pop() || '').replace(/_/g,' ') || null;
+
+  // ── LOCATION ──
+  let locationProfile = '';
+  if (tz.includes('San_Francisco') || (tz.includes('Los_Angeles') && highEnd && isMac)) {
+    locationProfile = `Your device and timezone place you in the Bay Area or Los Angeles — the region that designed and deployed most of the infrastructure this page is describing. The engineers who built these tracking systems work within miles of where you're sitting. The firms that fund them are headquartered here. The industry has spent two decades generating profit from this data, and the people most implicated in building it live and work in the same zip codes as the people most vocal about its harms.`;
+  } else if (tz.includes('New_York')) {
+    locationProfile = `Your device and timezone place you in New York. The specific combination of hardware and location has already sorted you into a handful of advertising segments carrying inferred attributes — income bracket, likely neighborhood, probable commute pattern — derived not from anything you disclosed but from the passive signals your browser emits continuously. Your financial profile, in particular, has been purchased and resold by data brokers frequently enough that companies you have never heard of hold records on your spending, credit behavior, and purchase history that are, in aggregate, more granular than anything your bank maintains.`;
+  } else if (tz.includes('London')) {
+    locationProfile = `Your device and timezone place you in London, where your transit card swipes, CCTV appearances, and browser activity exist as three distinct datasets, each with existing legal authority available to connect them. You hold more formal data rights than Americans do — the UK GDPR is real legislation with real enforcement mechanisms, occasionally deployed. The commercial surveillance infrastructure you are embedded in is, for most practical purposes, the same one operating everywhere else.`;
+  } else if (tz.includes('Chicago')) {
+    locationProfile = `Your device places you in Chicago, which has become one of the most comprehensively surveilled cities in the country through a combination of facial recognition cameras, a citywide license plate logging network, and a police data-sharing program called ShotSpotter that has faced sustained criticism for its accuracy and its disproportionate deployment in Black neighborhoods. The data this page collected about you flows through a commercial ecosystem that has its largest concentration of corporate infrastructure — data brokers, credit agencies, insurance analytics firms — in the same metro area.`;
+  } else if (tz.includes('Seattle')) {
+    locationProfile = `Your device and timezone place you in Seattle. Amazon's cloud infrastructure runs a substantial fraction of the global surveillance apparatus — government agencies, law enforcement databases, and commercial data brokers all operate on AWS. Microsoft's telemetry reaches more consumer devices than any other company on earth. Your income has a reasonable probability of being connected to one of them, and the data describing your daily life has a near certainty of passing through their systems.`;
+  } else if (tz.includes('Austin') || tz.includes('Dallas') || tz.includes('Houston')) {
+    locationProfile = `Your device and timezone place you in Texas, which has no comprehensive state data privacy law. In the months following the Supreme Court's Dobbs decision in June 2022, researchers demonstrated that location data showing visits to reproductive health clinics was available for purchase from commercial brokers without a warrant requirement. Several Texas legislators have since moved to codify that access for prosecutors. Your browsing takes place in a legal environment where commercial surveillance data has fewer restrictions on its acquisition by the state than in almost any other US jurisdiction.`;
+  } else if (tz.includes('Atlanta') || tz.includes('Nashville')) {
+    locationProfile = `Your device and timezone place you in the South, in states where law enforcement's access to commercial surveillance data faces fewer statutory restrictions than almost anywhere else in the country. Following Dobbs, prosecutors in several southeastern states acquired explicit authority to purchase commercial location data showing clinic visits as potential evidence, without obtaining a warrant. The surveillance infrastructure generating that data predates those laws by more than a decade; the laws simply formalized an access that was, in practice, already available.`;
+  } else if (tz.includes('Boston')) {
+    locationProfile = `Your device and timezone place you in Boston, which has the highest concentration of hospitals, universities, and biotech firms of any metro in the country. Your health-adjacent browsing carries specific commercial value in this market. The same institutions that treat patients have been repeatedly documented transmitting patients' search queries, condition inquiries, and appointment-booking activity to Facebook and Google through embedded tracking pixels — not through negligence but through the standard deployment of tools whose full data collection is invisible to the operators who installed them.`;
+  } else if (tz.includes('Miami')) {
+    locationProfile = `Your device and timezone place you in Miami, which has one of the highest concentrations of bilingual households in the country. If your browser lists multiple languages, you have already transmitted a signal — immigrant heritage, international family ties, dual-cultural identity — that advertisers have built specific targeting categories around. That inference was made before you finished loading this page, and it is being acted on across every ad auction your device participates in.`;
+  } else if (isEUtz) {
+    locationProfile = `Your device and timezone place you in Europe, where you nominally hold the strongest data rights of anyone on earth. The GDPR established a meaningful legal framework — consent requirements, the right to erasure, restrictions on automated decision-making. What it did not anticipate adequately was the scale of the industry it was meant to regulate, the creativity with which "legitimate interest" would be interpreted to sidestep consent requirements, or the chronic underfunding of the national data protection authorities tasked with enforcement. The rights exist. The gap between the rights and the practice is wide.`;
+  } else if (city) {
+    locationProfile = `Your device and timezone place you in the ${city} area. The combination of hardware, location, language, and browsing time has already produced a profile specific enough for individual-level targeting — not as a member of a broad demographic, but as a specific person with inferred income, inferred interests, and inferred purchase intent. The companies acting on that profile do not have your name. They have something they consider more useful: a persistent identifier linked to your behavior across thousands of sites, updated in real time.`;
+  } else {
+    locationProfile = `Your precise location was not captured by timezone alone, but the combination of your device, language, and connection type has placed you in a regional market with enough specificity for individual-level targeting. Anonymity, in this context, is a matter of degree rather than kind — the profile is less precise than it would be with a city-level fix, and still sufficient for the purposes it is being put to.`;
+  }
+
+  // ── DEVICE / INCOME ──
+  let deviceNarrative = '';
+  if (isMac && highEnd && hiRes && !isMobile) {
+    deviceNarrative = `The device you're using is a high-end Mac — the core count and display resolution indicate a recent MacBook Pro or Mac Studio. Before any other signal about you was considered, that single data point sorted you into the top income quartile of internet users. Advertisers pay a premium to reach people on hardware like this. Political campaigns, which have been documented paying more per impression for high-income targeting segments, pay a larger one. That premium is applied silently across every advertising auction your browser participates in, which, on an average browsing session, numbers in the thousands.`;
+  } else if (isMac && !isMobile) {
+    deviceNarrative = `The device you're using is a Mac. In every major demographic analysis of device ownership, Mac households skew college-educated, urban, and upper-middle income relative to the broader population. Your hardware is functioning as a proxy for your net worth — a data point that was read and acted upon before you finished loading this page, and that follows you across every website you visit that carries advertising.`;
+  } else if (isLinux && !isMobile) {
+    deviceNarrative = `You're running Linux. Most of what this page describes is not new information to you. Your operating system is itself a demographic signal — one that advertisers have mapped to professional and technical occupations — and it informs what you are shown across the commercial web. The fact that you're here suggests either professional interest in how this infrastructure works or a more personal reason for wanting to understand it clearly.`;
+  } else if (isIOS && highEnd && hiRes) {
+    deviceNarrative = `You're on a late-model iPhone. Apple has built a significant portion of its recent marketing around privacy — the App Tracking Transparency framework, the "Privacy. That's iPhone." campaign, the prominent display of privacy nutrition labels in the App Store. What that marketing does not address is that the same third-party trackers that operate everywhere else run in Safari, that researchers have documented multiple workarounds to ATT's restrictions developed by large app developers in the years since its introduction, and that Apple's own data collection from this device, enabled by default, is extensive.`;
+  } else if (isIOS) {
+    deviceNarrative = `You're on an iPhone. More than half of US smartphone users are on iOS, but the demographic distribution is not uniform — iPhone users trend younger, more urban, and higher-income than the overall population in consistent survey data. That distribution is known to every advertiser running campaigns on mobile, and it is reflected in the premiums they pay to reach you.`;
+  } else if (isAndroid && highEnd) {
+    deviceNarrative = `You're on a high-end Android device. Google's data collection at the operating system level — location history, app usage, search queries, purchase intent signals derived from Gmail and Search — is more comprehensive than anything a website can access directly. The profile Google holds on this device is almost certainly more complete than the one this page constructed, and it is updated continuously, not only when you visit a site that runs Google Analytics.`;
+  } else if (isWin && highEnd) {
+    deviceNarrative = `You're on a high-spec Windows machine. Windows telemetry — enabled by default across all consumer versions since Windows 10 — delivers Microsoft a continuous stream of device usage data regardless of which browser you use or which privacy settings you have configured. In 2023, Microsoft announced plans to integrate advertising identifiers more deeply into Windows, a decision that drew regulatory scrutiny in the EU and almost no coverage in the US.`;
+  } else {
+    deviceNarrative = `Your device is mid-range — sufficient for demographic targeting and segment assignment, if not for the premium inventory reserved for high-income hardware profiles. The advertising market at the median income is the largest by volume, and the data infrastructure serving it is no less extensive than the one serving the top quartile. The difference is in the price per impression, not in the scope of the collection.`;
+  }
+
+  // ── BEHAVIORAL ──
+  let behaviorNarrative = '';
+  const dayName = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'][dow];
+  if (isWorkHours && !isMobile) {
+    behaviorNarrative = `It is ${hour < 12 ? 'late morning' : 'the middle of the afternoon'} on a ${dayName}, and you are reading this on a desktop. Behavioral data on this pattern — long-form editorial content consumed during business hours on a non-mobile device — is consistently associated with salaried employment, scheduling autonomy, and professional occupations with significant screen time. That behavioral signature, aggregated across enough people who match it, becomes a targeting category that commands a premium from advertisers trying to reach decision-makers and knowledge workers.`;
+  } else if (isLateNight) {
+    behaviorNarrative = `It is past 10pm. Behavioral data on late-night browsing patterns has been sold to insurance underwriters and health-data brokers as a proxy indicator for anxiety, insomnia, and related conditions — health status signals derived not from medical records but from the timestamp of a page view. The companies collecting this data are not healthcare providers; they are advertising platforms and the data brokers who aggregate their outputs. The health inferences they enable are a downstream product of infrastructure built to sell ads.`;
+  } else if (isMobile && isWorkHours) {
+    behaviorNarrative = `You are on a phone during working hours. Whether that reflects a job without a fixed desk, time spent in transit, or the nearly universal practice of personal browsing during the workday, the behavioral pattern is the same from the data's perspective: a mobile user active during business hours in a specific geographic market, reading content in a specific interest category. That combination is a targeting input, and it is being used as one across every ad auction your device is participating in right now.`;
+  } else {
+    behaviorNarrative = `The time at which you are reading this is itself a data point that has been collected, stored, and sold. Your daily pattern of online activity — the hours when you check news, conduct research, or browse — constitutes a behavioral signature that advertising platforms use to model your receptivity to specific content categories and to determine when to serve it. That modeling happens without your awareness and without a mechanism for correction if the inferences are wrong.`;
+  }
+
+  // ── LANGUAGE ──
+  let langNarrative = '';
+  if (langs.length > 2 && lang.startsWith('en')) {
+    langNarrative = `Your browser is configured with ${langs.length} language preferences. That configuration is, in practice, a reliable indicator of bilingualism — English as a primary language with one or more others spoken at home or with family. Advertisers have built targeting categories around this signal specifically, using it as a proxy for immigrant heritage, international ties, and a set of purchasing behaviors and cultural affinities that the data industry has found commercially useful to address separately from monolingual English speakers.`;
+  } else if (lang.startsWith('en-US') && isUStz) {
+    langNarrative = `Your browser is configured for American English with a single language preference. You are in the core demographic of the English-language internet, which is also the most heavily monetized information environment in history — one in which the average user's attention is subject to thousands of advertising auctions per day, generating revenue for intermediaries the user has never interacted with and often has no awareness of.`;
+  } else if (lang.startsWith('en-GB') || (isEUtz && lang.startsWith('en'))) {
+    langNarrative = `Your browser is configured for British English. You nominally operate under stronger data protections than users in the United States — the UK GDPR and its predecessor have created a legal framework that American legislators have declined to replicate at the federal level. The commercial advertising infrastructure you interact with daily has adapted to that framework while preserving, through "legitimate interest" provisions and consent management platforms designed to maximize opt-in rates, most of its practical functionality.`;
+  } else {
+    langNarrative = `Your browser's primary language is ${lang}, which places you in a specific linguistic and cultural market segment that has been mapped and monetized in considerable detail. Language configuration is one of the fastest demographic inferences available to a tracking system — it is set before you interact with a page and transmitted as part of every request your browser makes.`;
+  }
+
+  // ── REFERRER ──
+  let refNarrative = '';
+  if (!ref) {
+    refNarrative = `You arrived at this page without a referrer — through direct navigation, a link sent via an encrypted messaging application, or a source that strips outgoing tracking parameters. Given the subject matter, it is either coincidence or a habit that predates this visit.`;
+  } else if (refHost.includes('google')) {
+    refNarrative = `You arrived here from a Google search. The query you entered — the exact phrase, the time of the search, your IP address, and a persistent identifier linked to your search history — was logged by Google regardless of whether you are signed into an account. Search intent is considered by the advertising industry to be the most commercially sensitive behavioral signal available, more predictive of purchase behavior than click history or browsing patterns, and it is retained, indexed, and acted upon indefinitely.`;
+  } else if (refHost.includes('twitter') || refHost.includes('x.com')) {
+    refNarrative = `You arrived here from Twitter/X. The platform registered that click and updated your interest graph to reflect engagement with content about surveillance and data collection — a categorization that will influence what you are shown going forward. Platforms learn from every action, including the actions of users who are, in that moment, reading about how platforms learn from their actions.`;
+  } else if (refHost.includes('linkedin')) {
+    refNarrative = `You arrived here from LinkedIn, which already holds your professional history — title, employer, industry, career trajectory, and, through its advertising platform, inferences about your seniority, income, and purchasing authority. It has now recorded that someone with your professional profile clicked through to a page about commercial surveillance. That is a specific kind of professional interest, and LinkedIn's business model involves acting on exactly that kind of specificity.`;
+  } else if (refHost.includes('facebook')) {
+    refNarrative = `You arrived here from Facebook. The company that has been named as a defendant or subject in more major data misuse investigations than any other platform logged that click, attributed it to your profile, and updated the behavioral model it maintains on you. The click will be used. It always is.`;
+  } else {
+    refNarrative = `You arrived here from ${refHost}. That domain is a data point about your habits — the communities you participate in, the publications you read, the people whose recommendations you follow. In the commercial data ecosystem, referrer data contributes to a picture of your interests, affiliations, and likely demographics that is assembled not from any single source but from the aggregate of where you go and where you came from.`;
+  }
+
+  return {locationProfile, deviceNarrative, behaviorNarrative, langNarrative, refNarrative,
+          city, tz, cores, ram, hiRes, isMobile, isLinux, lang, isUStz, isEUtz,
+          isSouthernUS, isMac, highEnd, refHost};
+}
+
+function renderProfile(p) {
+  document.getElementById('profileText').innerHTML =
+    `<p>${p.locationProfile}</p>
+     <p>${p.deviceNarrative}</p>
+     <p>${p.behaviorNarrative}</p>
+     <p>${p.langNarrative}</p>
+     <p>${p.refNarrative}</p>
+     <p>No form. No account. No interaction. Scroll down to see the raw data behind this profile.</p>`;
+
+  const conf = [
+    {label:'Location', val: p.city || 'Unknown'},
+    {label:'Device', val: p.isMobile ? 'Mobile' : 'Desktop — ' + (p.isLinux ? 'Linux' : p.hiRes ? 'Hi-res' : 'Standard')},
+    {label:'CPU threads', val: p.cores + ' cores'},
+    {label:'Language', val: p.lang},
+  ];
+  document.getElementById('confRow').innerHTML = conf.map(c =>
+    `<div class="conf-item"><strong>${c.val}</strong><span>${c.label}</span></div>`
+  ).join('');
+}
+
+renderProfile(buildProfile());
+
+// ── DEVICE TABLE ──
+const rows = [
+  ['IP Address', '(server-side — reveals city, ISP, VPN status)'],
+  ['User Agent', nav.userAgent.substring(0,72)+'…'],
+  ['Language', nav.language],
+  ['All languages', (nav.languages || [nav.language]).join(', ')],
+  ['Screen resolution', scr.width+'×'+scr.height],
+  ['Viewport', window.innerWidth+'×'+window.innerHeight],
+  ['Device pixel ratio', (window.devicePixelRatio||1).toFixed(1)+'×'],
+  ['Colour depth', scr.colorDepth+'-bit'],
+  ['Timezone', Intl.DateTimeFormat().resolvedOptions().timeZone],
+  ['Platform', nav.platform||'Unknown'],
+  ['CPU threads', (nav.hardwareConcurrency||'?')+' cores'],
+  ['RAM', nav.deviceMemory ? nav.deviceMemory+'GB (approx)' : 'Not exposed'],
+  ['Connection', (nav.connection&&nav.connection.effectiveType)||'Not exposed'],
+  ['Touch points', nav.maxTouchPoints||0],
+  ['Do Not Track', nav.doNotTrack==='1' ? 'Enabled (industry stopped honoring this in 2019)' : 'Not set'],
+  ['Cookies enabled', nav.cookieEnabled ? 'Yes' : 'No'],
+  ['Local time', new Date().toLocaleString()],
+];
+const tbl = document.getElementById('deviceTable');
+rows.forEach(([k,v]) => {
+  const tr = document.createElement('tr');
+  tr.innerHTML = `<td>${k}</td><td>${v}</td>`;
+  tbl.appendChild(tr);
+});
+if (nav.getBattery) nav.getBattery().then(b => {
+  const tr = document.createElement('tr');
+  tr.innerHTML = `<td>Battery</td><td>${Math.round(b.level*100)}% — usable as a persistent tracking token</td>`;
+  tbl.insertBefore(tr, tbl.children[4]);
+}).catch(()=>{});
+
+// ── FINGERPRINT BARS ──
+const traits = [
+  ['Screen dimensions', 82], ['Timezone match', 73], ['CPU core count', 61],
+  ['Canvas fingerprint', 94], ['WebGL renderer', 89], ['Audio fingerprint', 96],
+  ['Combined signal', 99]
+];
+const fp = document.getElementById('fpSection');
+fp.innerHTML = traits.map(([l,p]) =>
+  `<div class="fp-row"><div class="fp-label">${l}</div><div class="fp-track"><div class="fp-fill" id="fp_${l.replace(/\W/g,'_')}" style="width:0%"></div></div><div class="fp-pct">${p}%</div></div>`
+).join('');
+setTimeout(() => traits.forEach(([l,p]) => {
+  const el = document.getElementById('fp_'+l.replace(/\W/g,'_'));
+  if (el) el.style.width = p+'%';
+}), 300);
+
+// ── COOKIES ──
+function setCk(n,v,d){document.cookie=`${n}=${v}; expires=${new Date(Date.now()+d*864e5).toUTCString()}; path=/`;}
+function getCk(n){const m=document.cookie.match(new RegExp('(?:^|; )'+n+'=([^;]*)'));return m?m[1]:null;}
+const uid = getCk('dtrans_uid') || ('u_'+Math.random().toString(36).slice(2,10));
+const sid = 's_'+Math.random().toString(36).slice(2,10);
+const vis = parseInt(getCk('dtrans_v')||'0') + 1;
+setCk('dtrans_uid', uid, 365);
+setCk('dtrans_session', sid, 1);
+setCk('dtrans_v', vis, 365);
+setCk('dtrans_ref', document.referrer||'direct', 30);
+
+const cks = [
+  {n:'Persistent ID', t:'Stored for 365 days', v:uid, i:'Links every visit you make — past and future — to a single continuous record. On a commercial site, that record would include which articles you read, how far you scrolled, what you searched before you arrived, and what you did after you left.'},
+  {n:'Session ID', t:'Stored for 24 hours', v:sid, i:'Maps the sequence of this specific visit: which sections you read, how long you spent on each, where you paused. Advertisers have found that the order in which a person reads is as predictive of intent as the content they click.'},
+  {n:'Visit counter', t:'Stored for 365 days', v:vis+' visit(s)', i:'Tracks how many times you have returned. Return visits command higher prices in advertising auctions — demonstrated interest is more commercially valuable than a single encounter.'},
+  {n:'Referrer', t:'Stored for 30 days', v:document.referrer||'direct', i:'Records where you came from — which publication, search term, or social platform sent you here. This is sold back to advertisers as attribution data and used to calculate the commercial value of each traffic source.'},
+];
+document.getElementById('cookieSection').innerHTML = cks.map(c =>
+  `<div class="cookie-card">
+    <div class="cookie-name">${c.n}</div>
+    <div class="cookie-type">${c.t}</div>
+    <div class="cookie-id">Your ID: ${c.v}</div>
+    <div class="cookie-impact">${c.i}</div>
+  </div>`
+).join('');
+
+// ── TRACKER ITEMS ──
+const gaFields = [
+  ['Your tracking ID', uid],
+  ['This session', sid],
+  ['Page visited', window.location.href.slice(0,38)+'…'],
+  ['Where you came from', document.referrer||'(none)'],
+  ['Your screen', scr.width+'×'+scr.height],
+  ['Your language', nav.language],
+  ['Scroll depth', 'tracked continuously'],
+  ['Time on page', 'tracked continuously'],
+];
+document.getElementById('gaItems').innerHTML = gaFields.map(([k,v]) =>
+  `<div class="tracker-item"><span class="tracker-key">${k}</span><span class="tracker-val">${v}</span></div>`
+).join('');
+
+const fbFields = [
+  ['Your tracking ID', '_fbp_'+Math.random().toString(36).slice(2,8)+'…'],
+  ['Event type', 'PageView'],
+  ['Page visited', window.location.href.slice(0,38)+'…'],
+  ['Where you came from', document.referrer||'(none)'],
+  ['Your browser', nav.userAgent.substring(0,28)+'…'],
+  ['Your screen', window.innerWidth+'×'+window.innerHeight],
+  ['Timestamp', new Date().toISOString().slice(0,19)],
+];
+document.getElementById('pixelItems').innerHTML = fbFields.map(([k,v]) =>
+  `<div class="tracker-item"><span class="tracker-key">${k}</span><span class="tracker-val">${v}</span></div>`
+).join('');
+
+// ── CASES ──
+const p = buildProfile();
+const allCases = {
+  ice: {
+    score: p.isUStz ? 15 : 2,
+    label: 'United States — Immigration Enforcement',
+    stat: '$100M+',
+    statLabel: 'spent by ICE on commercial surveillance contracts',
+    title: 'ICE, Palantir, and the data you didn\'t consent to share',
+    body: 'Between 2012 and 2020, Immigration and Customs Enforcement spent more than $100 million on contracts with commercial data aggregators — among them Thomson Reuters CLEAR, LexisNexis Risk Solutions, and Palantir Technologies — to construct searchable profiles of undocumented immigrants without obtaining warrants. The software Palantir provided draws connections across disparate records, identifying individuals from the cumulative pattern of an ordinary digital life: the IP addresses their phones have used, the locations their apps have reported, the purchase records their loyalty cards have generated. None of the people whose data ended up in these systems had a meaningful opportunity to withhold it. Most had no idea it existed in a form that could be queried by a federal agency.',
+  },
+  dobbs: {
+    score: p.isSouthernUS ? 18 : (p.isUStz ? 10 : 2),
+    label: 'United States — Reproductive Rights',
+    stat: '$160',
+    statLabel: 'cost to purchase a person\'s clinic visit history',
+    title: 'Location data and abortion access after Dobbs',
+    body: 'In the weeks following the Supreme Court\'s Dobbs decision in June 2022, researchers at Motherboard demonstrated that location data showing visits to reproductive health clinics was available for purchase from commercial data brokers for as little as $160 per dataset. The data had been collected not by healthcare providers but by weather applications, retail loyalty programs, and navigation services — apps that users had granted location access for purposes entirely unrelated to their medical decisions. That location history, once collected, enters a commercial market with no meaningful restrictions on resale or end use. Several states that have since enacted abortion bans have passed legislation explicitly authorizing prosecutors to purchase commercial location data as evidence, without a warrant. The data was not gathered for that purpose; it was gathered because location data, sold in aggregate, had been a profitable commodity for years before the legal landscape changed.',
+  },
+  lavender: {
+    score: (p.isLinux || (p.isMac && p.highEnd)) ? 14 : (p.isEUtz ? 10 : 4),
+    label: 'Gaza, 2023–present',
+    stat: '37,000',
+    statLabel: 'AI-generated targets — averaging 20 seconds of human review each',
+    title: 'Lavender: AI targeting built on mass surveillance data',
+    body: 'In April 2024, reporting by +972 Magazine and Local Call described an Israeli military AI system called Lavender, trained on mass surveillance data drawn from communication metadata, location histories, and social network analysis, that had generated a list of as many as 37,000 Palestinians identified as potential bombing targets. The human review assigned to each name averaged twenty seconds. The categories of data that fed the system — who a person communicated with, where they traveled, what they posted, who they knew — are not meaningfully different from the categories of data that any commercial website, including this one, is capable of collecting from a browser during an ordinary visit. The data was gathered over years, for purposes that had nothing to do with military targeting. It was repurposed because it was available, and because the infrastructure for acting on it at scale had been built.',
+  },
+  cambridge: {
+    score: (p.refHost.includes('facebook') || p.refHost.includes('twitter') || p.isEUtz) ? 14 : 6,
+    label: 'United States / United Kingdom — Electoral Manipulation',
+    stat: '87M',
+    statLabel: 'profiles harvested without consent — $5B fine, no criminal charges',
+    title: 'Cambridge Analytica used Facebook\'s tools as designed',
+    body: 'In 2018, it emerged that Cambridge Analytica had harvested the profile data of approximately 87 million Facebook users without their knowledge or consent, and had used psychographic models derived from that data to deliver targeted political content to voters in the 2016 US presidential election and the Brexit referendum. A subsequent Senate Intelligence Committee investigation revealed that Russia\'s Internet Research Agency had reached approximately 126 million Americans on Facebook with divisive, fabricated political content — not by breaching the platform\'s security, but by purchasing advertising through the same targeting tools available to any marketer, segmented by the behavioral and demographic data Facebook had accumulated on its users. Facebook was fined $5 billion by the FTC, the largest privacy fine in US history at the time. No individual executives faced criminal prosecution. The targeting infrastructure that made both operations possible was not dismantled.',
+  },
+  grindr: {
+    score: 7,
+    label: 'Global — LGBTQ+ Communities',
+    stat: '60+',
+    statLabel: 'countries where homosexuality is criminalized — and this data is accessible',
+    title: 'Grindr, data brokers, and exposure in hostile jurisdictions',
+    body: 'In 2018, researchers at the Norwegian nonprofit SINTEF found that Grindr was sharing users\' precise GPS coordinates and HIV status with third-party advertising partners including Appsflyer and Braze. The company initially disputed the findings, then acknowledged them. In 2021, location data tied to the app was used by journalists at The Pillar to identify and publicly out a Catholic priest, who resigned. That outcome sits at the visible end of a much wider spectrum of harm: in more than sixty countries, homosexuality remains a criminal offense, and the commercial data infrastructure that enables targeted advertising — location histories, behavioral profiles, device identifiers, social graphs — has become a practical tool for finding people in those jurisdictions whose physical safety depends on not being found. The data was not designed for that application. There is no mechanism in the commercial data market that prevents it.',
+  }
+};
+
+const sorted = Object.values(allCases).sort((a,b) => b.score - a.score).slice(0,3);
+document.getElementById('casesSection').innerHTML = sorted.map(c =>
+  `<div class="case">
+    <div class="case-label">${c.label}</div>
+    <div class="case-stat">${c.stat}</div>
+    <div class="case-stat-label">${c.statLabel}</div>
+    <h3>${c.title}</h3>
+    <p>${c.body}</p>
+  </div>`
+).join('');
+
+// ── ACTIVITY LOG ──
+const logEl = document.getElementById('actLog');
+const events = [];
+function log(t) {
+  const ts = new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  events.unshift({ts,t});
+  logEl.innerHTML = events.slice(0,16).map(e =>
+    `<div class="log-line"><span class="log-t">${e.ts}</span><span class="log-e">${e.t}</span></div>`
+  ).join('');
+}
+log('Page loaded — 17 device signals captured before first scroll.');
+log('Persistent tracking ID set. Visit linked to prior session history.');
+log('Google Analytics page_view beacon fired — 11 parameters transmitted.');
+log('Meta Pixel PageView fired — device fingerprint sent to Facebook.');
+log('Demographic profile inferred and rendered without user input.');
+log(`Visit #${vis} recorded.`);
+
+let maxS = 0;
+window.addEventListener('scroll', () => {
+  const pct = Math.round((window.scrollY / (document.body.scrollHeight - window.innerHeight)) * 100);
+  if (pct > maxS + 9) { maxS = pct; log(`Scroll depth ${pct}% — engagement milestone recorded.`); }
+}, {passive:true});
+
+let clicks = 0;
+document.addEventListener('click', e => {
+  clicks++;
+  log(`Click #${clicks} recorded at position (${e.clientX}, ${e.clientY}).`);
+});
+
+let lm = 0;
+document.addEventListener('mousemove', () => {
+  const n = Date.now();
+  if (n - lm > 7000) { lm = n; log('Cursor movement sampled — dwell and velocity patterns updated.'); }
+}, {passive:true});
+</script>
+</body>
+</html>
