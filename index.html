@@ -17,10 +17,11 @@ html,body{background:var(--bg);color:var(--ink);font-family:'Inter',sans-serif;o
 .masthead{padding:1.25rem 2.5rem;border-bottom:1px solid var(--rule-strong);display:flex;justify-content:space-between;align-items:center;font-family:'DM Mono',monospace;font-size:0.68rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--ink-muted)}
 .masthead-brand{color:var(--accent);letter-spacing:0.15em}
 
-#livePanel{position:fixed;right:1.5rem;top:50%;transform:translateY(-50%);z-index:100;width:260px;background:rgba(22,33,62,0.97);border:1px solid var(--rule-strong);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);padding:0.9rem 1rem}
-#livePanel .live-tag{margin-bottom:0.6rem}
-#livePanelLog .log-line{padding:2px 0;border-bottom:1px solid rgba(240,236,228,0.04)}
+#livePanel{position:fixed;top:1.5rem;right:1.5rem;z-index:100;width:240px;background:rgba(22,33,62,0.97);border:1px solid var(--rule-strong);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);padding:0.45rem 0.9rem 0.5rem}
+#livePanel .live-tag{margin-bottom:0.3rem;font-size:0.6rem}
+#livePanelLog .log-line{padding:1px 0;border-bottom:1px solid rgba(240,236,228,0.04)}
 #livePanelLog .log-line:last-child{border-bottom:none}
+@media(max-width:600px){#livePanel{width:180px;top:1rem;right:1rem;padding:0.4rem 0.75rem}}
 
 .hero{min-height:96vh;display:flex;flex-direction:column;justify-content:center;padding:5rem 2.5rem;border-bottom:1px solid var(--rule-strong);background:radial-gradient(ellipse at 65% 40%,rgba(233,69,96,0.07) 0%,transparent 60%)}
 .hero-eyebrow{font-family:'DM Mono',monospace;font-size:0.65rem;letter-spacing:0.18em;text-transform:uppercase;color:var(--accent);margin-bottom:2.5rem;display:flex;align-items:center;gap:0.75rem}
@@ -563,7 +564,7 @@ const events = [];
 function log(t) {
   const ts = new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit',second:'2-digit'});
   events.unshift({ts,t});
-  logEl.innerHTML = events.slice(0,8).map(e =>
+  logEl.innerHTML = events.slice(0,3).map(e =>
     `<div class="log-line"><span class="log-t">${e.ts}</span><span class="log-e">${e.t}</span></div>`
   ).join('');
 }
