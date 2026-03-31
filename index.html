@@ -583,15 +583,23 @@ log('Demographic profile inferred and rendered without user input.');
 log(`Visit #${vis} recorded.`);
 
 let maxS = 0;
+const scrollMilestones = new Set();
 window.addEventListener('scroll', () => {
   const pct = Math.round((window.scrollY / (document.body.scrollHeight - window.innerHeight)) * 100);
   if (pct > maxS + 9) { maxS = pct; log(`Scroll depth ${pct}% — engagement milestone recorded.`); }
+  [25, 50, 75, 100].forEach(m => {
+    if (pct >= m && !scrollMilestones.has(m)) {
+      scrollMilestones.add(m);
+      gtag('event', 'scroll_depth', {depth_percentage: m});
+    }
+  });
 }, {passive:true});
 
 let clicks = 0;
 document.addEventListener('click', e => {
   clicks++;
   log(`Click #${clicks} recorded at position (${e.clientX}, ${e.clientY}).`);
+  gtag('event', 'page_click', {click_number: clicks, x: e.clientX, y: e.clientY});
 });
 
 let lm = 0;
@@ -599,6 +607,24 @@ document.addEventListener('mousemove', () => {
   const n = Date.now();
   if (n - lm > 7000) { lm = n; log('Cursor movement sampled — dwell and velocity patterns updated.'); }
 }, {passive:true});
+
+// ── SECTION VIEWED ──
+const sectionObserver = new IntersectionObserver(entries => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      const heading = entry.target.querySelector('h1, h2');
+      const label = heading ? heading.textContent.trim().slice(0, 60) : 'unknown';
+      gtag('event', 'section_viewed', {section_name: label});
+      sectionObserver.unobserve(entry.target);
+    }
+  });
+}, {threshold: 0.3});
+document.querySelectorAll('.section, .hero').forEach(s => sectionObserver.observe(s));
+
+// ── TIME ON PAGE ──
+[[30000,'30s'],[60000,'60s'],[180000,'3min'],[300000,'5min']].forEach(([ms, label]) => {
+  setTimeout(() => gtag('event', 'time_on_page', {milestone: label}), ms);
+});
 </script>
 </body>
 </html>
