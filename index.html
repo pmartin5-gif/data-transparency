@@ -575,6 +575,23 @@ function log(t) {
     `<div class="log-line"><span class="log-t">${e.ts}</span><span class="log-e">${e.t}</span></div>`
   ).join('');
 }
+
+// ── INTERCEPT GTAG → LIVE PANEL ──
+const _gtag = window.gtag;
+window.gtag = function() {
+  if (arguments[0] === 'event') {
+    const name = arguments[1];
+    const params = arguments[2] || {};
+    let msg = '';
+    if      (name === 'scroll_depth')   msg = `GA · scroll_depth — ${params.depth_percentage}% reached`;
+    else if (name === 'section_viewed') msg = `GA · section_viewed — "${params.section_name}"`;
+    else if (name === 'time_on_page')   msg = `GA · time_on_page — ${params.milestone} milestone`;
+    else if (name === 'page_click')     msg = `GA · page_click #${params.click_number} — (${params.x}, ${params.y})`;
+    else                                msg = `GA · ${name} fired`;
+    log(msg);
+  }
+  return _gtag.apply(this, arguments);
+};
 log('Page loaded — 17 device signals captured before first scroll.');
 log('Persistent tracking ID set. Visit linked to prior session history.');
 log('Google Analytics page_view beacon fired — 11 parameters transmitted.');
