@@ -106,3 +106,23 @@ A record of each instruction exchange. Newest entries at the bottom.
 - Syntax check only
 
 **Verdict:** Fulfilled. ("Yes")
+
+---
+
+## 005 · GA synopsis and outgoing-events sidebar in PRODUCT.md
+**Date:** 2026-11-24
+
+**Context:** The user asked (as questions) whether GA is set up and what GA could collect, with the condition that it only matters if it can be reflected back to the user in real time. My answer: GA's inferences can't come back per user; the realtime API gives totals only and needs a server; per-user, real-time reflection is limited to what the page itself sends (GA cookies, outgoing request contents).
+
+**Instruction:** Don't add the full overview to `PRODUCT.md`. Condense it into a synopsis (individual data can't be reflected back through GA), and add an item: a persistent sidebar that shows when events are sent to GA or other third parties, to circle back to later.
+
+**Interpretations:**
+1. Two short additions under "Showing it with impact": a 2–3 line GA synopsis and the sidebar item. Excluded: the detailed breakdown, sending `S`/`X`/`B` to GA, any code changes. Asked: should the sidebar reference the existing live log panel?
+   - *Answer:* it stands on its own for now. *Confirmed.*
+
+**Confirmed intent:** Interpretation 1, with the sidebar as a standalone item.
+
+**Executed:**
+- `PRODUCT.md`: added the GA synopsis and the sidebar item under "Showing it with impact"
+
+**Verdict:** Fulfilled. ("Yes thank you")

@@ -23,3 +23,4 @@ Prompts are either **questions** or **instructions**.
 Distilled from `claude-devlog.md`. Add or revise an entry only when a pattern emerges (recurring misinterpretations, approaches that reliably match intent), not after every exchange. Tell the user when this section changes. Keep each entry short and phrased as guidance.
 
 - **Scope to the narrowest reading.** Corrections so far have removed things I added: displaying data, and verification steps (003). Propose the core change only, and offer extras like display, QA or follow-on edits as separate optional suggestions, not part of the interpretation. The user works in deliberate stages (collect → reflect → interpret → test).
+- **Keep `PRODUCT.md` entries brief.** The user asked for a condensed synopsis instead of a full overview (005). Record conclusions and decisions in a line or two; detailed reasoning stays in conversation or the devlog.

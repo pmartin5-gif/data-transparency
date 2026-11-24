@@ -16,6 +16,8 @@ Loose notes on where this could go.
 
 ### Showing it with impact
 - Find impactful ways to present what we've learned back to the user
+- **GA can't reflect individual data back.** What Google infers (location, demographics, cross-device links) stays on Google's side, and its real-time API only reports totals across visitors (and needs a server). GA's value here is showing what gets *sent*, not as a data source.
+- **Persistent sidebar of outgoing events:** shows each event as it's sent to GA or other third parties. _(circle back later)_
 - **Revisit the canvas fingerprint** (from devlog 004):
   - The bar's high/low/blocked values (94 / 25 / 5) are placeholders I picked. Consider a published research figure, cited, as the baseline.
   - The incognito claim was removed from the log. It holds in Chrome but not in recent Safari, Firefox or Brave private windows, so if it comes back it should depend on the browser.
