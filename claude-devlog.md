@@ -259,4 +259,79 @@ A record of each instruction exchange. Newest entries at the bottom.
 - `PRODUCT.md`: test visitors item updated
 - Not tested in a real browser
 
-**Verdict:** _pending_
+**Verdict:** Fulfilled. ("This was a successful launch of a test bed.") The user is collecting notes on the results to pass on.
+
+---
+
+## 011 · Remove Google Analytics; record GA events locally for simulation
+**Date:** 2026-11-24
+
+**Instruction:** Disable Google Analytics on the site; GA data will be simulated the same way as pixel data. Remove GA and add a note to simulate GA data in `PRODUCT.md`.
+
+**Interpretations:**
+1. Remove the GA tag and the four event calls plus the log mirror; fix text that becomes false (footer's GA claims; engine's "GA blocked" check, which would fire for everyone; the `_ga` "Google first assigned your browser an ID" statement); leave the Part Two GA panel and the 56% stat for the simulation pass. `PRODUCT.md`: fold GA into the simulated-pixels item, mark "four cookies" resolved. Update p05/p06 and re-run tests.
+   - *Correction:* don't re-run tests (the user is still reviewing). Still simulate GA data being collected. *Question:* can we tell whether a user might have sent GA data without sending it to Google? Answer: what GA *would have collected*, yes, exactly, built locally; whether a blocker *would have stopped* it, only approximately (bait checks), because the only sure test contacts Google.
+2. Keep the event hooks pointed at a local recorder (GA4-shaped, sends nothing, shows nothing); leave `tests/` untouched; add the blocking likelihood with a same-site bait file to the note.
+   - *Correction:* simulate only what the site would attempt; sidestep blocking. Suggested wording "when you arrived the site sent [data types] to Google." I flagged that "sent" would be untrue now and proposed "would have sent" with a simulation label, per the earlier rules.
+3. Final: as 2 without blocking; wording note in `PRODUCT.md`.
+   - *Confirmed.* ("All this sounds good.")
+
+**Confirmed intent:** Interpretation 3.
+
+**Executed:**
+- `index.html`:
+  - Removed the `gtag.js` tag and `G-7JHYWRBJ4Z` config from `<head>`
+  - Replaced the `window.gtag` wrapper (and its "GA ·" log lines) with a local `gtag()` that records events into `simGA.events`, shaped as GA4 requests (v, tid, cid, sid, sct, en, ep, dl, dr, dt, sr, ul, _et). Simulated client ID in memory only; no cookie, no network request. Also records GA4's automatic `first_visit` / `session_start` / `page_view`
+  - Existing event calls (scroll depth, clicks, sections viewed, time on page) unchanged; they now hit the recorder
+  - Footer: removed "Behavioral data is transmitted to Google Analytics" and "GA4"
+  - Engine: removed the GA-blocked variant of T1-20 and the `_ga` sentence of T1-26; collection: removed the GA load check and the 1.5 s wait it needed
+- `PRODUCT.md`: "Simulated tracking pixels" → "Simulated third-party tracking (pixels and GA)" with the GA notes, wording note, an open question on persisting the simulated ID, and the Part Two GA panel fix-later; "four cookies" marked resolved
+- `inference-map.md`: implementation note on T1-20/T1-26 and the p05/p06 test update needed
+- `tests/` not edited or run, per instruction. Syntax check only
+
+**Verdict:** Fulfilled. ("Yes, this did as intended.") Open question answered: it's fine that the simulated GA ID resets on every reload.
+
+---
+
+## 012 · Single-session rule for recorders; bring PRODUCT.md up to date
+**Date:** 2026-11-24
+
+**Instruction:** Local recorders shouldn't keep any recorded data outside a single session. Update `PRODUCT.md` so it's current and consistent with progress so far.
+
+**Interpretations:**
+1. The recorders (`simGA`, `B`, `X`) already live in page memory only, so: write the rule down (`CLAUDE.md` "Project rules" + a code comment). Asked whether it covers the page's own cookies (three outlast a session); default: recorders only. `PRODUCT.md`: update "Built so far," mark the engine built, note GA removal on the GA synopsis and sidebar, drop `_ga` references from the cookie summary, mark the simulated-ID question answered; leave older ungrouped items.
+   - *Confirmed*, plus: add a note to revisit cookies in `PRODUCT.md`.
+
+**Confirmed intent:** Interpretation 1 (rule covers recorders only), plus a cookies revisit note.
+
+**Executed:**
+- `CLAUDE.md`: new "Project rules" section with the single-session rule for recorders
+- `index.html`: rule comment above the recorders (no behavior change)
+- `PRODUCT.md`: "Built so far" rewritten; engine marked built (and `[STAT]` omission noted); p05/p06 test note; cookie summary without `_ga`, plus a "Revisit" sub-item on the page's persistent cookies vs. the rule; GA synopsis and sidebar note GA's removal; simulated-ID question marked decided; Tone notes the profile rewrite already done. Within the simulated tracking item, the GA bullets now come before the pixel bullets
+
+**Verdict:** Fulfilled. ("Yes")
+
+---
+
+## 013 · Test-bed notes: drop unavailable data, add explication, note the impact goal
+**Date:** 2026-11-24
+
+**Instruction (pasted notes):** (1) Don't tell the user when data wasn't available, e.g. "your search terms weren't passed," "you arrived without a referrer." (2) Say more about what the information means; reworded fingerprint example given. (3) The language was dialed back too far: make inferences bolder and language more impactful (two examples given). Note (3) and circle back after the research step: levers are inference insight (after research) and language (later if needed).
+
+**Interpretations:**
+1. Now: remove the no-referrer statement and the search-terms clause (privacy-tool "conspicuous absence" statements stay); replace the fingerprint paragraph with the user's wording. Later: a grouped `PRODUCT.md` note with both levers, the examples, and a flag that "in the last 4 years" has no supporting signal. Then update p05/p06 and re-run tests. Asked: fold the audio fingerprint in or drop it? Apply (2) beyond the fingerprint now or defer?
+   - *Answers:* don't run tests yet. Apply (2) generally where relevant: "we're at 1 out of 10 for explication; raise it to 3." (Audio question not answered; folded in by default, reversible.)
+   - *Confirmed.*
+
+**Confirmed intent:** Interpretation 1 with explication applied broadly at a modest level; no test runs.
+
+**Executed:**
+- `index.html` engine:
+  - Removed the no-referrer statement and "your search terms weren't passed to this page"
+  - T1-21 fingerprint → the user's wording; the silent sound folded in ("…and does the same with a silent sound"); the audio-only sentence kept for when the canvas is blocked or randomized
+  - One short meaning clause added to T1-01, 03, 06, 09, 10, 11, 15/16, 20, 23, 24, 26, 27 (live), 28, 29, 30. Statements that already carried meaning (T1-02, 04, 05, 07, 08, 13, 17, 18, 22, 25, Tier 2) unchanged
+- `PRODUCT.md`: explication note; "Increase impact" item with both levers, the user's examples verbatim, and the research flag
+- `inference-map.md`: implementation note
+- `tests/` not edited or run, per instruction. Syntax check only
+
+**Verdict:** Fulfilled. ("Yes")

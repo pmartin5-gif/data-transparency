@@ -2,13 +2,6 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-7JHYWRBJ4Z"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-  gtag('config', 'G-7JHYWRBJ4Z');
-</script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>You Are Being Watched</title>
 <style>
@@ -204,8 +197,8 @@ footer{padding:2.5rem;font-family:'DM Mono',monospace;font-size:0.63rem;letter-s
 </div>
 
 <footer>
-  <div>All browser-based processing on this page is local to your device. Behavioral data is transmitted to Google Analytics.</div>
-  <div style="margin-top:0.5rem;opacity:0.5">Data Transparency Project · GA4 · No third-party ad trackers</div>
+  <div>All browser-based processing on this page is local to your device.</div>
+  <div style="margin-top:0.5rem;opacity:0.5">Data Transparency Project · No third-party ad trackers</div>
 </footer>
 
 <script>
@@ -223,20 +216,44 @@ function log(t) {
     `<div class="log-line"><span class="log-t">${e.ts}</span><span class="log-e">${e.t}</span></div>`
   ).join('');
 }
-const _gtag = window.gtag;
-window.gtag = function() {
-  if (arguments[0]==='event') {
-    const n=arguments[1], p=arguments[2]||{};
-    let m='';
-    if(n==='scroll_depth') m=`GA · scroll_depth — ${p.depth_percentage}%`;
-    else if(n==='section_viewed') m=`GA · section_viewed — "${p.section_name}"`;
-    else if(n==='time_on_page') m=`GA · time_on_page — ${p.milestone}`;
-    else if(n==='page_click') m=`GA · page_click #${p.click_number}`;
-    else m=`GA · ${n} fired`;
-    log(m);
-  }
-  return _gtag.apply(this,arguments);
-};
+// PROJECT RULE: local recorders (simGA, X, B) keep nothing beyond a single session.
+// They live in page memory only; never write their data to cookies, storage or a server.
+//
+// ── SIMULATED GOOGLE ANALYTICS (nothing is sent) ──
+// Google Analytics was removed from this page (devlog 011). gtag() now records each
+// event locally, shaped like the GA4 request it would have produced, so the page can
+// later show visitors what GA *would have* sent. No network request is made and
+// nothing is displayed yet. The client ID is in memory only (not a cookie).
+const simGA = (()=>{
+  const nowSec = Math.floor(Date.now()/1000);
+  return {
+    measurementId: 'G-SIMULATED',
+    clientId: `${Math.floor(Math.random()*2147483647)}.${nowSec}`, // GA's format: random number + first-seen timestamp
+    sessionId: String(nowSec),
+    lastEventAt: performance.now(),
+    events: [],
+  };
+})();
+function gtag(cmd, name, params) {
+  if (cmd !== 'event') return;
+  const t = performance.now();
+  simGA.events.push({
+    v: '2', tid: simGA.measurementId, cid: simGA.clientId, sid: simGA.sessionId,
+    sct: typeof vis === 'number' ? vis : null,            // session count (this page's visit counter)
+    en: name, ep: Object.assign({}, params || {}),          // event name and parameters
+    dl: location.href, dr: document.referrer, dt: document.title,
+    sr: `${screen.width}x${screen.height}`, ul: (navigator.language || '').toLowerCase(),
+    _et: Math.round(t - simGA.lastEventAt),                 // engagement time since the previous event (ms)
+    at: Date.now(),
+  });
+  simGA.lastEventAt = t;
+}
+// Events GA4 sends automatically on load
+setTimeout(() => {
+  if (vis === 1) gtag('event', 'first_visit');
+  gtag('event', 'session_start');
+  gtag('event', 'page_view');
+}, 0);
 
 // ── SYNC SIGNALS ──
 const nav = navigator, scr = screen;
@@ -596,13 +613,8 @@ function xVoices(){
 }
 
 function xTrackerCheck(){
-  const res = performance.getEntriesByType('resource').find(r=>r.name.includes('googletagmanager.com/gtag/js'));
-  return {
-    gaScriptLoaded: typeof window.google_tag_manager !== 'undefined',
-    gaResourceSeen: !!res,
-    gaResourceBytes: res ? res.transferSize : null,
-    baitBlocked: S.adblock ?? null,
-  };
+  // GA load check removed with GA (devlog 011); the bait-element result remains.
+  return { baitBlocked: S.adblock ?? null };
 }
 
 function xNavTiming(){
@@ -664,7 +676,6 @@ async function collectExtended(){
   Object.assign(X, { clientHints, webgpu, storage, bluetoothAvailable, keyboardLayout, gpc: nav.globalPrivacyControl ?? null });
   X.audioCheck = { read1:S.audio ?? null, read2:audioRecheck, stable: S.audio!=null && S.audio!=='blocked' && S.audio===audioRecheck };
 
-  await new Promise(r=>setTimeout(r,1500)); // give the GA script time to arrive (or fail)
   X.tracker = xTrackerCheck();
   X.cpu = xCpuBenchmark();
   X.ready = true;
@@ -893,7 +904,7 @@ function engKeyboard(k){
 function inferLive(B){
   B=B||{}; const out=[];
   const copies=B.copies||[];
-  if(copies.length){ let t=copies[copies.length-1].text.replace(/\s+/g,' '); if(t.length>140) t=t.slice(0,140)+'…'; out.push(`You copied: “${t}”${/[.!?…]$/.test(t)?'':'.'}`); }
+  if(copies.length){ let t=copies[copies.length-1].text.replace(/\s+/g,' '); if(t.length>140) t=t.slice(0,140)+'…'; out.push(`You copied: “${t}”${/[.!?…]$/.test(t)?'':'.'} Pages can see exactly what you select and copy.`); }
   const tab=B.tab||{};
   if(tab.hiddenCount>0) out.push(`You’ve left this tab ${tab.hiddenCount===1?'once':tab.hiddenCount+' times'}, for ${engDuration(tab.awayMs||0)} in total.`);
   const secs=Object.entries(B.sectionsMs||{}).sort((a,b)=>b[1]-a[1]);
@@ -913,22 +924,22 @@ function inferProfile(D){
   const mp=X.mediaPrefs||{};
 
   // ── Device (D) ──
-  if(S.isAndroid&&ch&&ch.model) add('T1-01','D','device','device-id','Obs',`Your phone reports its model as ${ch.model}.`,{model:ch.model});
+  if(S.isAndroid&&ch&&ch.model) add('T1-01','D','device','device-id','Obs',`Your phone reports its model as ${ch.model}. Any site you visit can read this, and a model number points to roughly what a phone cost and when it was made.`,{model:ch.model});
   if(S.isIOS&&S.isMobile) add('T1-02','D','device','device-id', isUS?'Likely':'Obs',
     'You’re on an iPhone.'+(isUS?' In the US, owning an iPhone is one of the strongest single predictors of high household income.':''), {premium:isUS});
   const rawGpu=(X.webgl&&X.webgl.unmaskedRenderer)||'';
   const chip=rawGpu.match(/Apple (M\d+)(?: (Pro|Max|Ultra))?/);
   if(chip) add('T1-04','D','device','device-id','Strong',
     `Your Mac runs on an Apple ${chip[1]}${chip[2]?' '+chip[2]:''} chip${chip[2]?', from the higher-priced tiers of Apple’s lineup':''}.`, {premium:!!chip[2]});
-  else { const gpu=engGpuName(rawGpu)||(X.webgpu&&X.webgpu.description)||''; if(gpu&&!S.isMobile) add('T1-03','D','device','device-id','Obs',`Your computer’s graphics hardware identifies itself as ${gpu}.`); }
+  else { const gpu=engGpuName(rawGpu)||(X.webgpu&&X.webgpu.description)||''; if(gpu&&!S.isMobile) add('T1-03','D','device','device-id','Obs',`Your computer’s graphics hardware identifies itself as ${gpu}. Sites read this without asking, and it is one of the details that sets your computer apart from others.`); }
   if((mp.colorGamut==='p3'||mp.colorGamut==='rec2020')&&mp.dynamicRange==='high'&&!S.isMac&&!S.isIOS)
     add('T1-05','D','device','display','Likely','Your screen supports wide colour and HDR, features found mostly on higher-priced displays.',{premium:true});
   if(S.isWin&&ch&&ch.platformVersion){ const major=parseInt(ch.platformVersion,10);
-    if(major>=1&&major<13) add('T1-06','D','device','device-age','Strong','Your computer runs Windows 10, which stopped receiving free security updates on October 14, 2025.',{costSignal:true});
-    else if(major===0) add('T1-06','D','device','device-age','Strong','Your computer runs a version of Windows older than 10, which no longer receives security updates.',{costSignal:true}); }
+    if(major>=1&&major<13) add('T1-06','D','device','device-age','Strong','Your computer runs Windows 10, which stopped receiving free security updates on October 14, 2025. Sites can see this, and systems without security updates are easier targets for malware.',{costSignal:true});
+    else if(major===0) add('T1-06','D','device','device-age','Strong','Your computer runs a version of Windows older than 10, which no longer receives security updates. Sites can see this, and systems without security updates are easier targets for malware.',{costSignal:true}); }
   if(S.isAndroid&&S.ram&&S.ram<=2) add('T1-07','D','device','cost','Likely',`Your phone has ${S.ram} GB of memory, which is typical of lower-cost models.`,{lowCost:true});
   if(S.conn&&S.conn.save) add('T1-08','D','device','data-plan','Likely','Your browser asks websites to use less data, a setting usually turned on to manage a limited data plan.',{costSignal:true});
-  if(X.screen&&X.screen.isExtended===true) add('T1-09','D','device','monitors','Obs','You’re using more than one monitor.');
+  if(X.screen&&X.screen.isExtended===true) add('T1-09','D','device','monitors','Obs','You’re using more than one monitor, a setup most common at a desk used for work.');
 
   // ── Installed software (W) ──
   const dev=ENG_DEV_FONTS.filter(f=>fonts.has(f));
@@ -941,13 +952,13 @@ function inferProfile(D){
   if(S.isWin&&voiceLangs.length) add('T1-13','W','software','voices','Likely',   // Windows only: macOS/iOS/Android ship many languages by default
     `Your computer has text-to-speech voices installed for ${engList(voiceLangs.map(b=>engName(b,'language')))}, which usually come from language packs added by the owner.`,{supportLangs:voiceLangs});
   const kb=engKeyboard(X.keyboardLayout);
-  if(kb) add('T1-30','W','software','keyboard','Obs',`Your keyboard is set to a ${kb.name} layout.`,{supportLangs:kb.langs});
+  if(kb) add('T1-30','W','software','keyboard','Obs',`Your keyboard is set to a ${kb.name} layout, which usually reflects the language you type in every day.`,{supportLangs:kb.langs});
 
   // ── Place (L, Z) ──
-  if(zone) add('T1-10','Z','place','zone','Obs',`Your device’s clock is set to ${zone}.`);
+  if(zone) add('T1-10','Z','place','zone','Obs',`Your device’s clock is set to ${zone}. Combined with your language settings, this places you in a region before any location permission is asked.`);
   const names=profileLanguageNames(langTags);
-  if(names.length>1) add('T1-11','L','place','languages','Obs',`Your browser is set to ${names[0]} first, then ${engList(names.slice(1))}.`);
-  else if(names.length===1&&primaryBase!=='en') add('T1-11','L','place','languages','Obs',`Your browser is set to ${names[0]}.`);
+  if(names.length>1) add('T1-11','L','place','languages','Obs',`Your browser is set to ${names[0]} first, then ${engList(names.slice(1))}. Every site sees these settings and uses them to decide which language, and which ads, to show you.`);
+  else if(names.length===1&&primaryBase!=='en') add('T1-11','L','place','languages','Obs',`Your browser is set to ${names[0]}. Every site sees this setting and uses it to decide which language, and which ads, to show you.`);
   const regionM=primary.match(/-([A-Z]{2})(?:-|$)/), langRegion=regionM?regionM[1]:null, tzCountry=engTzCountry(tz);
   if(langRegion&&tzCountry&&langRegion!==tzCountry)
     add('T1-12','L','place','lang-region','Likely',`Your browser’s language is set for ${engName(langRegion,'region')}, and your clock is set to ${zone}.`,{langRegion});
@@ -958,26 +969,22 @@ function inferProfile(D){
   // ── Time (T) ──
   const vt=B.visitTime||{}, h=vt.hour, dayName=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'][vt.dayOfWeek];
   if(typeof h==='number'){
-    if(h<5) add('T1-16','T','time','time-of-visit','Obs',`It’s ${engTime(h,vt.minute)} where you are.`);
-    else add('T1-15','T','time','time-of-visit','Obs',`You’re on ${S.isMobile?'a mobile device':'a computer'} at ${engTime(h,vt.minute)} on a ${dayName}.`,
+    if(h<5) add('T1-16','T','time','time-of-visit','Obs',`It’s ${engTime(h,vt.minute)} where you are. Every visit is timestamped, and over time those timestamps sketch your daily routine.`);
+    else add('T1-15','T','time','time-of-visit','Obs',`You’re on ${S.isMobile?'a mobile device':'a computer'} at ${engTime(h,vt.minute)} on a ${dayName}. Every visit is timestamped, and over time those timestamps sketch your daily routine.`,
       {atWork:!S.isMobile&&vt.dayOfWeek>=1&&vt.dayOfWeek<=5&&h>=9&&h<17});
   }
   if(X.webdriver===true) add('T1-19','T','time','automation','Strong','This page is being read by automated software, not directly by a person.');
 
   // ── History (H) ──
   const vis=parseInt(C.vis,10)||1;
-  const gaM=(C.ga||'').match(/^GA1\.\d\.\d+\.(\d{9,10})$/);
-  const hist=[];
-  if(vis>1) hist.push(`This is your ${engOrdinal(vis)} visit.`);
-  if(gaM){ const sec=+gaM[1], today=new Date(), d=new Date(sec*1000);
-    hist.push(d.toDateString()===today.toDateString()?'Google assigned your browser an ID on this site today.':`Google first assigned your browser an ID on this site on ${engDate(sec)}.`); }
-  if(hist.length) add('T1-26','H','history','returns','Obs',hist.join(' '));
+  if(vis>1) add('T1-26','H','history','returns','Obs',`This is your ${engOrdinal(vis)} visit. This page recognizes you through a cookie it set the first time you came.`);
   if(S.histLen>1) add('T1-28','H','history','tab-history','Obs',
-    S.histLen>=50?'This tab had at least 49 pages in its history before you arrived.':`This tab had ${S.histLen-1} ${S.histLen-1===1?'page':'pages'} in its history before you arrived.`);
+    (S.histLen>=50?'This tab had at least 49 pages in its history before you arrived.':`This tab had ${S.histLen-1} ${S.histLen-1===1?'page':'pages'} in its history before you arrived.`)+' Any page can read that count, though not the pages themselves.');
   const refHost=S.ref?(S.ref.split('/')[2]||''):'';
-  if(!S.ref) add('T1-29','H','history','referrer','Obs','You arrived without a referrer: you typed the address, used a bookmark, or followed a link from an app or site that doesn’t pass one on.');
-  else if(/(^|\.)google\./.test(refHost)) add('T1-29','H','history','referrer','Obs','You arrived from a Google search. Your search terms weren’t passed to this page.');
-  else add('T1-29','H','history','referrer','Obs',`You arrived from ${refHost}.`);
+  // Nothing is said when there is no referrer (unavailable data is left out).
+  const refNote=' The site you came from is passed along automatically, linking your visit here to where you were before.';
+  if(S.ref&&/(^|\.)google\./.test(refHost)) add('T1-29','H','history','referrer','Obs','You arrived from a Google search.'+refNote);
+  else if(S.ref) add('T1-29','H','history','referrer','Obs',`You arrived from ${refHost}.`+refNote);
 
   // ── Privacy (P) ──
   const canvasBlocked=S.canvas==='blocked', canvasRandom=!canvasBlocked&&S.canvasStable===false;
@@ -985,18 +992,16 @@ function inferProfile(D){
   const fp=[], fpSignals=[];
   if(canvasBlocked){ fp.push('Your browser refused to let this page read back a hidden drawing, which blocks canvas fingerprinting.'); fpSignals.push('canvas fingerprint'); }
   else if(canvasRandom){ fp.push('Asked to draw the same hidden image twice, your browser gave two different answers. It is disguising your device.'); fpSignals.push('canvas fingerprint'); }
-  else if(S.canvas) fp.push(`This page drew a hidden image in your browser. Tiny differences in how your graphics hardware, operating system and fonts render it produce a fingerprint, token ${S.canvas.slice(0,8)}, that stays the same when you clear your cookies.`);
+  else if(S.canvas) fp.push(`This page, and many pages like it, contains a hidden image and measures your device’s attempt to render it${!audioBlocked&&!audioRandom&&S.audio?', and does the same with a silent sound':''}. The unique combination of your graphics hardware, operating system and fonts produces a fingerprint ID, in this case token ${S.canvas.slice(0,8)}, that persists even if you’ve disabled cookies or cleared your browsing history.`);
   if(audioBlocked){ fp.push('Your browser also blocked the audio fingerprint.'); fpSignals.push('audio fingerprint'); }
   else if(audioRandom){ fp.push('Its audio fingerprint also changed between two reads.'); fpSignals.push('audio fingerprint'); }
-  else if(S.audio) fp.push(`It also processed a sound without playing it; the result, ${String(S.audio).slice(0,10)}, varies between devices and browsers.`);
+  else if(S.audio&&(canvasBlocked||canvasRandom)) fp.push('It did measure how your device processes a silent sound, which still varies between devices and browsers.');
   if(fp.length) add('T1-21','P','privacy','fingerprint', fpSignals.length?'Strong':'Obs', fp.join(' '), {blocking:fpSignals});
-  const gaBlocked=X.tracker&&X.tracker.gaScriptLoaded===false;
-  if(gaBlocked||S.adblock){
+  if(S.adblock){ // GA-blocked check removed with GA (devlog 011)
     const notStopped=[]; if(!canvasBlocked&&!canvasRandom&&S.canvas) notStopped.push('the canvas fingerprint'); if(!audioBlocked&&!audioRandom&&S.audio) notStopped.push('the audio result');
-    const t=[]; if(gaBlocked) t.push('Your browser blocked this page’s Google Analytics. The events in the log never reached Google.');
-    else t.push('An ad blocker is active in your browser.');
-    if(notStopped.length) t.push(`${gaBlocked?'Your blocker':'It'} did not stop ${notStopped.join(' or ')}.`);
-    add('T1-20','P','privacy','blockers','Obs',t.join(' '),{blocking:[gaBlocked?'Google Analytics':null, S.adblock?'ads':null].filter(Boolean)});
+    const t=['An ad blocker is active in your browser.'];
+    if(notStopped.length) t.push(`It did not stop ${notStopped.join(' or ')}, because fingerprinting runs inside the page instead of loading anything from a tracker’s servers.`);
+    add('T1-20','P','privacy','blockers','Obs',t.join(' '),{blocking:['ads']});
   }
   const utc=tz==='UTC'||tz==='Etc/UTC', letterbox=S.vw%200===0&&S.vh%100===0;
   if(utc&&primaryBase==='en'&&(letterbox||canvasRandom))
@@ -1004,7 +1009,7 @@ function inferProfile(D){
       ?'Your browser reports UTC time and a rounded window size, the pattern produced by Tor Browser’s protections.'
       :'Your browser reports UTC time and disguises its fingerprint, the pattern of Tor Browser or Firefox’s strictest privacy mode.',
       {blocking:['your real time zone'].concat(letterbox?['your window size']:[]), tor:true});
-  const req=[]; if(S.dnt==='1') req.push('You’ve asked websites not to track you (Do Not Track).');
+  const req=[]; if(S.dnt==='1') req.push('You’ve asked websites not to track you (Do Not Track). Most sites ignore this signal; it was never made legally binding.');
   if(X.gpc===true) req.push('Your browser sends Global Privacy Control, an opt-out signal recognized under California law and in several other states.');
   if(req.length) add('T1-23','P','privacy','requests','Obs',req.join(' '),{requests:req.length});
 
@@ -1014,7 +1019,7 @@ function inferProfile(D){
   if(mp.contrast==='more'){ acc.push('increase contrast'); vis2.push('contrast'); }
   if(mp.invertedColors===true){ acc.push('invert colours'); vis2.push('inverted'); }
   if(S.reducedMotion) acc.push('reduce motion');
-  if(acc.length) add('T1-24','A','access','a11y-settings','Obs',`Your device is set to ${engList(acc)}.`,{visual:vis2});
+  if(acc.length) add('T1-24','A','access','a11y-settings','Obs',`Your device is set to ${engList(acc)}. Sites can read these settings without asking.`,{visual:vis2});
   const rf=['OpenDyslexic','Atkinson Hyperlegible'].filter(f=>fonts.has(f));
   if(rf.length) add('T1-25','A','access','a11y-fonts','Likely',
     `You’ve installed ${engList(rf)}, ${rf.length>1?'typefaces':'a typeface'} designed for ${rf.includes('OpenDyslexic')&&rf.includes('Atkinson Hyperlegible')?'readers with dyslexia and low vision':rf[0]==='OpenDyslexic'?'readers with dyslexia':'readers with low vision'}.`,{readingFonts:rf});
@@ -1082,7 +1087,7 @@ function inferProfile(D){
 
 // ── PROFILE (page glue around the inference engine) ──
 let profileShown=false;
-function engineInput(){ return { S, X, B, cookies:{ vis, ga:getCk('_ga') } }; }
+function engineInput(){ return { S, X, B, cookies:{ vis } }; }
 function escHtml(t){ return String(t).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 
 function buildProfile() {

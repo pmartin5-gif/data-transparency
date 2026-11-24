@@ -317,6 +317,8 @@ Tier 1, Tier 2 and assembly are now built into `index.html` (between the `INFERE
 - **T2-F** needs at least one *blocking* signal; Do Not Track/GPC alone are requests, not hiding.
 - **T2-A ↔ T2-B conflict** can't occur on a real device under the current rules (T2-A needs desktop software, T2-B needs a phone); tested with a synthetic visitor (p20).
 - **T1-27 (live)** is computed separately by `inferLive()` and refreshed every 3 seconds.
+- **Devlog 011 (GA removed):** T1-20 now covers the ad-blocker bait only (the "your browser blocked this page's Google Analytics" variant is gone), and T1-26 now states only the visit count (the "Google first assigned your browser an ID" sentence is gone). Test visitors p05 and p06 still have GA-blocked data and targets; update them before the next run.
+- **Devlog 013:** statements for unavailable data removed (no-referrer statement; "your search terms weren't passed"). Short "what this means" clauses added to T1-01, 03, 06, 09, 10, 11, 15/16, 20, 23, 24, 26, 27, 28, 29, 30. T1-21 rewritten in the user's wording, with the silent sound folded in.
 
 ## Part 5: Gaps noticed (not collected, would strengthen rules)
 
