@@ -320,16 +320,12 @@ async function getMediaDevices() {
 }
 
 async function getCanvasFingerprint() {
-  try {
-    const c = document.createElement('canvas');
-    c.width=220; c.height=30;
-    const ctx = c.getContext('2d');
-    ctx.textBaseline='top'; ctx.font='14px Arial';
-    ctx.fillStyle='#f60'; ctx.fillRect(125,1,62,20);
-    ctx.fillStyle='#069'; ctx.fillText('Cwm fjordbank \u2764 glyphs vex',2,15);
-    ctx.fillStyle='rgba(102,204,0,0.7)'; ctx.fillText('Cwm fjordbank \u2764 glyphs vex',4,17);
-    const d=c.toDataURL(); return d.slice(-32);
-  } catch(e) { return 'blocked'; }
+  // Hash of the full image (see xCanvasRead), read twice.
+  // If the two reads differ, the browser is randomizing canvas output.
+  const a = xCanvasRead(), b = xCanvasRead();
+  if (a === null) { S.canvasStable = false; return 'blocked'; }
+  S.canvasStable = (a === b);
+  return a;
 }
 
 async function getAudioFingerprint() {
@@ -417,6 +413,383 @@ Promise.all([
   Object.assign(S, {webrtc, battery, media, canvas, audio, fonts, adblock, refreshRate, voices});
   buildAndRender();
 });
+
+// ══════════════════════════════════════════════════════════════
+// ── EXTENDED COLLECTION (collected only, not yet displayed) ──
+// X = passive signals (data-audit.md §2), filled after page load.
+// B = behavioral record (data-audit.md §3), updated live.
+// Both stay in the browser: nothing here is sent to GA or rendered.
+// ══════════════════════════════════════════════════════════════
+const X = { ready:false };
+
+function xHash(str){ // cyrb53
+  let h1=0xdeadbeef,h2=0x41c6ce57;
+  for(let i=0;i<str.length;i++){const ch=str.charCodeAt(i);h1=Math.imul(h1^ch,2654435761);h2=Math.imul(h2^ch,1597334677);}
+  h1=Math.imul(h1^(h1>>>16),2246822507)^Math.imul(h2^(h2>>>13),3266489909);
+  h2=Math.imul(h2^(h2>>>16),2246822507)^Math.imul(h1^(h1>>>13),3266489909);
+  return (4294967296*(2097151&h2)+(h1>>>0)).toString(16).padStart(14,'0');
+}
+function xMQ(q){ try{ return window.matchMedia(q).matches; }catch(e){ return null; } }
+function xPick(feature, values){ for(const v of values) if(xMQ(`(${feature}: ${v})`)) return v; return null; }
+
+async function xClientHints(){
+  if(!nav.userAgentData) return null;
+  try{
+    const hi = await nav.userAgentData.getHighEntropyValues(['platform','platformVersion','architecture','bitness','model','fullVersionList','wow64','formFactors']);
+    return Object.assign({ brands: nav.userAgentData.brands, mobile: nav.userAgentData.mobile }, hi);
+  }catch(e){ return null; }
+}
+
+function xWebGL(){
+  try{
+    const c=document.createElement('canvas');
+    const gl=c.getContext('webgl2')||c.getContext('webgl');
+    if(!gl) return null;
+    const P=n=>{ try{ return gl.getParameter(n); }catch(e){ return null; } };
+    const dbg=gl.getExtension('WEBGL_debug_renderer_info');
+    const hp=gl.getShaderPrecisionFormat(gl.FRAGMENT_SHADER,gl.HIGH_FLOAT);
+    const out={
+      version:P(gl.VERSION), shadingLanguage:P(gl.SHADING_LANGUAGE_VERSION),
+      vendor:P(gl.VENDOR), renderer:P(gl.RENDERER),
+      unmaskedVendor: dbg?P(dbg.UNMASKED_VENDOR_WEBGL):null,
+      unmaskedRenderer: dbg?P(dbg.UNMASKED_RENDERER_WEBGL):null,
+      maxTextureSize:P(gl.MAX_TEXTURE_SIZE), maxRenderbufferSize:P(gl.MAX_RENDERBUFFER_SIZE),
+      maxViewportDims: P(gl.MAX_VIEWPORT_DIMS)?[...P(gl.MAX_VIEWPORT_DIMS)]:null,
+      maxVertexAttribs:P(gl.MAX_VERTEX_ATTRIBS), maxTextureUnits:P(gl.MAX_TEXTURE_IMAGE_UNITS),
+      maxCombinedTextureUnits:P(gl.MAX_COMBINED_TEXTURE_IMAGE_UNITS),
+      aliasedLineWidth: P(gl.ALIASED_LINE_WIDTH_RANGE)?[...P(gl.ALIASED_LINE_WIDTH_RANGE)]:null,
+      fragmentHighFloatPrecision: hp?hp.precision:null,
+      extensions: gl.getSupportedExtensions()||[],
+    };
+    const lose=gl.getExtension('WEBGL_lose_context'); if(lose) lose.loseContext();
+    return out;
+  }catch(e){ return null; }
+}
+
+async function xWebGPU(){
+  if(!nav.gpu) return null;
+  try{
+    const a=await nav.gpu.requestAdapter();
+    if(!a) return { available:false };
+    const i=a.info||{};
+    return { available:true, vendor:i.vendor||'', architecture:i.architecture||'', device:i.device||'', description:i.description||'',
+      isFallback: a.isFallbackAdapter ?? i.isFallbackAdapter ?? null, features:[...a.features] };
+  }catch(e){ return null; }
+}
+
+function xLocale(){
+  try{
+    const now=new Date();
+    const d=Intl.DateTimeFormat().resolvedOptions();
+    const n=Intl.NumberFormat().resolvedOptions();
+    const h=new Intl.DateTimeFormat(undefined,{hour:'numeric'}).resolvedOptions();
+    let region=null, weekInfo=null;
+    try{ const L=new Intl.Locale(nav.language); region=L.maximize().region||null; weekInfo=L.getWeekInfo?L.getWeekInfo():(L.weekInfo||null); }catch(e){}
+    return {
+      locale:d.locale, calendar:d.calendar, numberingSystem:d.numberingSystem||n.numberingSystem,
+      hourCycle:h.hourCycle||null, hour12:h.hour12??null, weekInfo,
+      tzOffsetMinutes:-now.getTimezoneOffset(),
+      dateSample:now.toLocaleDateString(), numberSample:(1234567.89).toLocaleString(),
+      // time zone vs. language pair, recorded side by side (no interpretation yet)
+      tzLangPair:{ timeZone:d.timeZone, language:nav.language, languages:[...(nav.languages||[])], languageRegion:region },
+    };
+  }catch(e){ return null; }
+}
+
+function xMediaPrefs(){
+  return {
+    contrast: xPick('prefers-contrast',['more','less','custom','no-preference']),
+    reducedTransparency: xMQ('(prefers-reduced-transparency: reduce)'),
+    reducedData: xMQ('(prefers-reduced-data: reduce)'),
+    forcedColors: xMQ('(forced-colors: active)'),
+    invertedColors: xMQ('(inverted-colors: inverted)'),
+    monochrome: xMQ('(monochrome)'),
+    colorGamut: xPick('color-gamut',['rec2020','p3','srgb']),
+    dynamicRange: xPick('dynamic-range',['high','standard']),
+    videoDynamicRange: xPick('video-dynamic-range',['high','standard']),
+    pointer: xPick('pointer',['fine','coarse','none']),
+    anyPointer: xPick('any-pointer',['fine','coarse','none']),
+    hover: xPick('hover',['hover','none']),
+    anyHover: xPick('any-hover',['hover','none']),
+    displayMode: xPick('display-mode',['fullscreen','standalone','minimal-ui','browser']),
+    update: xPick('update',['fast','slow','none']),
+    orientation: xPick('orientation',['portrait','landscape']),
+  };
+}
+
+function xScreenGeometry(){
+  return {
+    width:scr.width, height:scr.height, availWidth:scr.availWidth, availHeight:scr.availHeight,
+    availLeft: scr.availLeft ?? null, availTop: scr.availTop ?? null,
+    reservedWidth: scr.width-scr.availWidth, reservedHeight: scr.height-scr.availHeight,
+    screenX:window.screenX, screenY:window.screenY,
+    outerWidth:window.outerWidth, outerHeight:window.outerHeight,
+    innerWidth:window.innerWidth, innerHeight:window.innerHeight,
+    windowFillsScreen: window.outerWidth>=scr.availWidth && window.outerHeight>=scr.availHeight,
+    orientation: scr.orientation ? scr.orientation.type : null,
+    isExtended: ('isExtended' in scr) ? scr.isExtended : null,
+  };
+}
+
+async function xStorage(){
+  if(!nav.storage||!nav.storage.estimate) return null;
+  try{
+    const e=await nav.storage.estimate();
+    const persisted = nav.storage.persisted ? await nav.storage.persisted() : null;
+    return { quota:e.quota??null, usage:e.usage??null, persisted };
+  }catch(e){ return null; }
+}
+
+async function xBluetooth(){
+  if(!nav.bluetooth||!nav.bluetooth.getAvailability) return null;
+  try{ return await nav.bluetooth.getAvailability(); }catch(e){ return null; }
+}
+
+function xCanvasRead(){
+  try{
+    const c=document.createElement('canvas'); c.width=220; c.height=30;
+    const ctx=c.getContext('2d');
+    ctx.textBaseline='top'; ctx.font='14px Arial';
+    ctx.fillStyle='#f60'; ctx.fillRect(125,1,62,20);
+    ctx.fillStyle='#069'; ctx.fillText('Cwm fjordbank ❤ glyphs vex',2,15);
+    ctx.fillStyle='rgba(102,204,0,0.7)'; ctx.fillText('Cwm fjordbank ❤ glyphs vex',4,17);
+    return xHash(c.toDataURL());
+  }catch(e){ return null; }
+}
+
+function xFonts(){
+  // Avoid the page's own web fonts (DM Serif Display, DM Mono, Inter): they'd always read as present.
+  const list=[
+    // Windows
+    'Arial Black','Bahnschrift','Candara','Corbel','Constantia','Ebrima','Gadugi','Segoe UI Emoji','Sitka Text','Tahoma',
+    // Mac
+    'Menlo','Monaco','Avenir Next','Didot','Optima','Baskerville','Hoefler Text','Skia','Chalkboard SE',
+    // Linux
+    'Noto Sans','Liberation Sans','Roboto','Droid Sans','Nimbus Sans',
+    // Microsoft Office
+    'Aptos','Calibri Light','Century Gothic','Tw Cen MT','Bookman Old Style','Rockwell','Garamond',
+    // Adobe
+    'Acumin Pro','Adobe Caslon Pro','Trajan Pro','Bickham Script Pro','Kozuka Gothic Pro','Source Sans 3',
+    // Developer
+    'Cascadia Code','SF Mono','Hack','Inconsolata','IBM Plex Mono',
+    // Design / commercial
+    'Helvetica Now Display','GT America','Neue Haas Grotesk Display Pro','Circular Std','Gotham','Brandon Grotesque',
+    // Regional scripts
+    'Microsoft YaHei','SimSun','PingFang SC','MingLiU','Meiryo','Hiragino Sans','Yu Gothic','Malgun Gothic','Apple SD Gothic Neo',
+    'Nirmala UI','Mangal','Kohinoor Devanagari','Vrinda','Leelawadee UI','Arabic Typesetting','Traditional Arabic','Geeza Pro','David','Noto Sans CJK SC',
+    // Accessibility
+    'OpenDyslexic','Atkinson Hyperlegible',
+  ];
+  try{
+    const ctx=document.createElement('canvas').getContext('2d');
+    const txt='mmmmmmmmmmlliWW@#0';
+    const w=f=>{ ctx.font=`72px ${f}`; return ctx.measureText(txt).width; };
+    const bases=['monospace','serif','sans-serif'];
+    const baseW=bases.map(w);
+    return { tested:list.length, found:list.filter(f=>bases.some((b,i)=>w(`'${f}',${b}`)!==baseW[i])) };
+  }catch(e){ return null; }
+}
+
+function xVoices(){
+  try{ return speechSynthesis.getVoices().map(v=>({ name:v.name, lang:v.lang, local:v.localService, isDefault:v.default })); }
+  catch(e){ return null; }
+}
+
+function xTrackerCheck(){
+  const res = performance.getEntriesByType('resource').find(r=>r.name.includes('googletagmanager.com/gtag/js'));
+  return {
+    gaScriptLoaded: typeof window.google_tag_manager !== 'undefined',
+    gaResourceSeen: !!res,
+    gaResourceBytes: res ? res.transferSize : null,
+    baitBlocked: S.adblock ?? null,
+  };
+}
+
+function xNavTiming(){
+  try{
+    const e=performance.getEntriesByType('navigation')[0];
+    if(!e) return null;
+    const paints={}; performance.getEntriesByType('paint').forEach(p=>paints[p.name]=Math.round(p.startTime));
+    return {
+      type:e.type, redirectCount:e.redirectCount, protocol:e.nextHopProtocol, deliveryType:e.deliveryType??null,
+      transferSize:e.transferSize, encodedBodySize:e.encodedBodySize, fromCache: e.transferSize===0 && e.encodedBodySize>0,
+      dnsMs:Math.round(e.domainLookupEnd-e.domainLookupStart),
+      connectMs:Math.round(e.connectEnd-e.connectStart),
+      tlsMs: e.secureConnectionStart>0 ? Math.round(e.connectEnd-e.secureConnectionStart) : null,
+      ttfbMs:Math.round(e.responseStart-e.requestStart),
+      downloadMs:Math.round(e.responseEnd-e.responseStart),
+      domContentLoadedMs:Math.round(e.domContentLoadedEventEnd),
+      loadMs:Math.round(e.loadEventEnd),
+      paints,
+    };
+  }catch(e){ return null; }
+}
+
+function xCpuBenchmark(){
+  // Fixed workload, best of 3 runs. Short (tens of ms) and run after load so it doesn't delay the page.
+  try{
+    const run=()=>{ const t=performance.now(); let x=0; for(let i=0;i<1e6;i++){ x+=Math.sqrt(i)*Math.sin(i); } return [performance.now()-t, x]; };
+    const times=[run()[0],run()[0],run()[0]];
+    return { bestMs:+Math.min(...times).toFixed(2), runsMs:times.map(t=>+t.toFixed(2)) };
+  }catch(e){ return null; }
+}
+
+async function collectExtended(){
+  Object.assign(X, {
+    locale: xLocale(),
+    mediaPrefs: xMediaPrefs(),
+    screen: xScreenGeometry(),
+    webdriver: nav.webdriver ?? null,
+    webgl: xWebGL(),
+    fontsExtended: xFonts(),
+    voicesList: xVoices(),
+    navTiming: xNavTiming(),
+  });
+  const c1=xCanvasRead(), c2=xCanvasRead();
+  X.canvasCheck = { read1:c1, read2:c2, stable: c1!==null && c1===c2 };
+
+  const [clientHints, webgpu, storage, bluetoothAvailable, audioRecheck] = await Promise.all([
+    xClientHints(), xWebGPU(), xStorage(), xBluetooth(), getAudioFingerprint(),
+  ]);
+  Object.assign(X, { clientHints, webgpu, storage, bluetoothAvailable });
+  X.audioCheck = { read1:S.audio ?? null, read2:audioRecheck, stable: S.audio!=null && S.audio!=='blocked' && S.audio===audioRecheck };
+
+  await new Promise(r=>setTimeout(r,1500)); // give the GA script time to arrive (or fail)
+  X.tracker = xTrackerCheck();
+  X.cpu = xCpuBenchmark();
+  X.ready = true;
+}
+if(document.readyState==='complete') setTimeout(collectExtended,0);
+else window.addEventListener('load',()=>setTimeout(collectExtended,0));
+
+// ── BEHAVIORAL RECORD ──
+const B = (()=>{
+  const now=Date.now(), d=new Date();
+  return {
+    startedAt: now,
+    visitTime: { local:d.toString(), hour:d.getHours(), minute:d.getMinutes(), dayOfWeek:d.getDay() },
+    mouse: { moves:0, distancePx:0, maxSpeed:0, avgSpeed:0, pauses:0, longestPauseMs:0 },
+    scroll: { events:0, distancePx:0, reversals:0, maxSpeed:0 },
+    sectionsMs: {},
+    idle: { periods:0, totalMs:0, longestMs:0, idleNow:false },
+    tab: { hiddenCount:0, awayMs:0, longestAwayMs:0, blurCount:0 },
+    selections: [],
+    copies: [],
+    resizes: [],
+    touches: { count:0, points:[] },
+    motion: { supported: typeof DeviceMotionEvent!=='undefined', needsPermission: typeof DeviceMotionEvent!=='undefined' && typeof DeviceMotionEvent.requestPermission==='function', samples:0, latest:null, orientation:null },
+  };
+})();
+
+(function initBehaviorCollection(){
+  const CAP=50, IDLE_MS=5000, PAUSE_MS=1000;
+  const push=(arr,item)=>{ arr.push(item); if(arr.length>CAP) arr.shift(); };
+  let lastActivity=Date.now(), idleStart=null;
+  const activity=()=>{
+    const n=Date.now();
+    if(B.idle.idleNow){
+      const dur=n-idleStart;
+      B.idle.totalMs+=dur; B.idle.longestMs=Math.max(B.idle.longestMs,dur); B.idle.idleNow=false;
+    }
+    lastActivity=n;
+  };
+
+  // Mouse: distance, speed, hesitation
+  let mx=null,my=null,mt=0,speedSum=0;
+  document.addEventListener('mousemove',e=>{
+    const n=performance.now();
+    if(mx!==null){
+      const dist=Math.hypot(e.clientX-mx,e.clientY-my), dt=n-mt;
+      B.mouse.distancePx+=dist;
+      if(dt>PAUSE_MS){ B.mouse.pauses++; B.mouse.longestPauseMs=Math.max(B.mouse.longestPauseMs,Math.round(dt)); }
+      else if(dt>0){ const s=dist/dt; speedSum+=s; B.mouse.maxSpeed=Math.max(B.mouse.maxSpeed,+s.toFixed(3)); }
+    }
+    B.mouse.moves++; B.mouse.avgSpeed=+(speedSum/B.mouse.moves).toFixed(3);
+    mx=e.clientX; my=e.clientY; mt=n;
+    activity();
+  },{passive:true});
+
+  // Scroll: distance, speed, reversals
+  let sy=window.scrollY, st=performance.now(), sdir=0;
+  window.addEventListener('scroll',()=>{
+    const n=performance.now(), dy=window.scrollY-sy, dt=n-st;
+    if(dy!==0){
+      const dir=Math.sign(dy);
+      if(sdir!==0 && dir!==sdir) B.scroll.reversals++;
+      sdir=dir;
+      B.scroll.distancePx+=Math.abs(dy);
+      if(dt>0) B.scroll.maxSpeed=Math.max(B.scroll.maxSpeed,+(Math.abs(dy)/dt).toFixed(3));
+    }
+    B.scroll.events++; sy=window.scrollY; st=n;
+    activity();
+  },{passive:true});
+
+  ['click','keydown','touchstart','wheel'].forEach(ev=>document.addEventListener(ev,activity,{passive:true}));
+
+  // Reading time per section (counted only while the tab is visible)
+  const visible=new Set();
+  const nameOf=el=>{ const h=el.querySelector('h1,h2'); return h?h.textContent.trim().slice(0,60):'section'; };
+  const io=new IntersectionObserver(entries=>entries.forEach(en=>{
+    const k=nameOf(en.target); en.isIntersecting?visible.add(k):visible.delete(k);
+  }),{threshold:0.5});
+  document.querySelectorAll('.section,.hero').forEach(s=>io.observe(s));
+
+  setInterval(()=>{
+    if(!document.hidden) visible.forEach(k=>{ B.sectionsMs[k]=(B.sectionsMs[k]||0)+1000; });
+    if(!B.idle.idleNow && Date.now()-lastActivity>IDLE_MS){ B.idle.idleNow=true; B.idle.periods++; idleStart=lastActivity; }
+  },1000);
+
+  // Tab switching and focus
+  let hiddenSince=null;
+  document.addEventListener('visibilitychange',()=>{
+    if(document.hidden){ B.tab.hiddenCount++; hiddenSince=Date.now(); }
+    else if(hiddenSince){ const away=Date.now()-hiddenSince; B.tab.awayMs+=away; B.tab.longestAwayMs=Math.max(B.tab.longestAwayMs,away); hiddenSince=null; }
+  });
+  window.addEventListener('blur',()=>{ B.tab.blurCount++; });
+
+  // Text selection and copy
+  let lastSel='';
+  const grabSelection=()=>{
+    const t=(window.getSelection?window.getSelection().toString():'').trim();
+    if(t && t!==lastSel){ lastSel=t; push(B.selections,{ text:t.slice(0,500), at:Date.now()-B.startedAt }); }
+  };
+  ['mouseup','keyup','touchend'].forEach(ev=>document.addEventListener(ev,grabSelection,{passive:true}));
+  document.addEventListener('copy',()=>{
+    const t=(window.getSelection?window.getSelection().toString():'').trim();
+    if(t) push(B.copies,{ text:t.slice(0,500), at:Date.now()-B.startedAt });
+  });
+
+  // Window resizes (debounced)
+  let rz=null;
+  window.addEventListener('resize',()=>{
+    clearTimeout(rz);
+    rz=setTimeout(()=>push(B.resizes,{ w:window.innerWidth, h:window.innerHeight, at:Date.now()-B.startedAt }),250);
+  },{passive:true});
+
+  // Touch position and pressure
+  document.addEventListener('touchstart',e=>{
+    for(const t of e.changedTouches){
+      B.touches.count++;
+      if(B.touches.points.length<200) B.touches.points.push({ x:Math.round(t.clientX), y:Math.round(t.clientY), vw:window.innerWidth,
+        force: t.force||null, radiusX: t.radiusX||null, radiusY: t.radiusY||null, at:Date.now()-B.startedAt });
+    }
+  },{passive:true});
+
+  // Device motion / orientation, only where no permission prompt is required
+  if(B.motion.supported && !B.motion.needsPermission){
+    let lastM=0, lastO=0;
+    window.addEventListener('devicemotion',e=>{
+      const n=Date.now(); if(n-lastM<1000) return; lastM=n;
+      const a=e.accelerationIncludingGravity||{}, r=e.rotationRate||{};
+      B.motion.samples++;
+      B.motion.latest={ ax:a.x, ay:a.y, az:a.z, alpha:r.alpha, beta:r.beta, gamma:r.gamma, interval:e.interval };
+    },{passive:true});
+    window.addEventListener('deviceorientation',e=>{
+      const n=Date.now(); if(n-lastO<1000) return; lastO=n;
+      B.motion.orientation={ alpha:e.alpha, beta:e.beta, gamma:e.gamma, absolute:e.absolute };
+    },{passive:true});
+  }
+})();
 
 function buildAndRender() {
   const p = buildProfile();
@@ -654,7 +1027,7 @@ function renderSignalTable() {
     ['Bluetooth API', S.bluetooth?'Available':'Not available'],
     ['WebXR/VR', S.webxr?'Available':'Not available'],
     ['WebAssembly', S.wasm?'Supported':'Not supported'],
-    ['Canvas fingerprint', S.canvas&&S.canvas!=='blocked'?'Captured (token: …'+S.canvas.slice(-8)+')':'Blocked'],
+    ['Canvas fingerprint', S.canvas&&S.canvas!=='blocked'?'Captured (token: '+S.canvas.slice(0,8)+'…)':'Blocked'],
     ['Audio fingerprint', S.audio&&S.audio!=='blocked'?'Captured (sig: '+S.audio.slice(0,10)+'…)':'Blocked'],
     ['Installed fonts', S.fonts&&S.fonts.length?S.fonts.join(', '):'None detected'],
   ];
@@ -668,7 +1041,8 @@ function renderSignalTable() {
 
 // ── FINGERPRINT BARS ──
 function renderFingerprintBars() {
-  const canvasScore = S.canvas&&S.canvas!=='blocked' ? 94 : 20;
+  // Based on what was measured this visit: stable = identifying; varies between reads = randomized; blocked.
+  const canvasScore = !S.canvas||S.canvas==='blocked' ? 5 : (S.canvasStable ? 94 : 25);
   const audioScore = S.audio&&S.audio!=='blocked' ? 96 : 15;
   const fontScore = S.fonts ? Math.min(50 + S.fonts.length * 2, 88) : 40;
   const traits=[
@@ -746,7 +1120,8 @@ function renderCases(p) {
 function initEvents() {
   log('Page loaded — '+countSignals()+' device signals captured before first scroll.');
   log('Persistent tracking ID set. Visit #'+vis+' recorded.');
-  log('Canvas + audio fingerprint captured. Persists across incognito mode.');
+  log((S.canvas&&S.canvas!=='blocked' ? 'Canvas fingerprint captured, token '+S.canvas.slice(0,8)+'.' : 'Canvas fingerprint blocked.')
+    +' '+(S.audio&&S.audio!=='blocked' ? 'Audio fingerprint captured, signature '+S.audio.slice(0,10)+'.' : 'Audio fingerprint blocked.'));
   if(S.webrtc&&S.webrtc.length) log('WebRTC IP leak: '+S.webrtc.join(', '));
   if(S.adblock) log('Ad blocker detected — fingerprinting unaffected.');
 

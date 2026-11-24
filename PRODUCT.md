@@ -16,6 +16,10 @@ Loose notes on where this could go.
 
 ### Showing it with impact
 - Find impactful ways to present what we've learned back to the user
+- **Revisit the canvas fingerprint** (from devlog 004):
+  - The bar's high/low/blocked values (94 / 25 / 5) are placeholders I picked. Consider a published research figure, cited, as the baseline.
+  - The incognito claim was removed from the log. It holds in Chrome but not in recent Safari, Firefox or Brave private windows, so if it comes back it should depend on the browser.
+  - Consider hashing raw pixels instead of the PNG file, if we want to show the visitor their rendering or how much noise their browser adds.
 
 ### Dialogue depth
 - Write more line options so the text reflects finer differences between hardware setups

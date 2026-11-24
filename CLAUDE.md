@@ -1,0 +1,25 @@
+# Data Transparency: Working Agreement
+
+## Workflow
+
+Prompts are either **questions** or **instructions**.
+
+**Questions:** answer directly. No check-back, no devlog entry.
+
+**Instructions** (anything that changes the codebase or project files):
+1. Reflect back what you believe the intention is. Make no changes yet.
+2. Iterate on that interpretation until the user confirms it's correct.
+3. Execute the confirmed interpretation, and nothing beyond it.
+4. Ask whether the execution fulfilled the intention.
+5. Record the whole exchange in `claude-devlog.md` (format at the top of that file), including the user's verdict once given.
+
+## Files
+
+- `PRODUCT.md`: loose directions for the project, with ideas clustered into areas of exploration as they come up in conversation.
+- `claude-devlog.md`: raw record of every instruction exchange.
+
+## Learnings
+
+Distilled from `claude-devlog.md`. Add or revise an entry only when a pattern emerges (recurring misinterpretations, approaches that reliably match intent), not after every exchange. Tell the user when this section changes. Keep each entry short and phrased as guidance.
+
+- **Scope to the narrowest reading.** Corrections so far have removed things I added: displaying data, and verification steps (003). Propose the core change only, and offer extras like display, QA or follow-on edits as separate optional suggestions, not part of the interpretation. The user works in deliberate stages (collect → reflect → interpret → test).
