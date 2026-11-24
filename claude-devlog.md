@@ -335,3 +335,22 @@ A record of each instruction exchange. Newest entries at the bottom.
 - `tests/` not edited or run, per instruction. Syntax check only
 
 **Verdict:** Fulfilled. ("Yes")
+
+---
+
+## 014 · Hand-off note for the next session
+**Date:** 2026-11-24
+
+**Instruction:** The user is stepping away; the project resumes in a new context window. Leave a note that the next items are: set up IP address collection and reflection, then feed that data into the inference engine, then deep research to build out the engine with more insight.
+
+**Interpretations:**
+1. A "Next up" section in `CLAUDE.md` (read automatically) with the three steps in order, orientation pointers, and the decisions step 1 raises (outside lookup service vs. the footer's "local" claim; single-session rule). Matching next-steps line in `PRODUCT.md`.
+   - *Confirmed.*
+
+**Confirmed intent:** Interpretation 1.
+
+**Executed:**
+- `CLAUDE.md`: "Next up" section (orientation reading list, three ordered steps, decisions to settle, pending p05/p06 test update)
+- `PRODUCT.md`: "Next steps" line at the top of "What we can learn"
+
+**Verdict:** _pending_. The user is stepping away; ask at the start of the next session.

@@ -13,6 +13,18 @@ Prompts are either **questions** or **instructions**.
 4. Ask whether the execution fulfilled the intention.
 5. Record the whole exchange in `claude-devlog.md` (format at the top of that file), including the user's verdict once given.
 
+## Next up (set 2026-11-24, end of first session)
+
+Start here when resuming. First read `PRODUCT.md`, `inference-map.md` (incl. "Implementation notes") and the last few entries of `claude-devlog.md`. Then, in order:
+
+1. **IP address collection and reflection.** Get the visitor's IP address and what it reveals (city/region, internet provider or organization, VPN/proxy/data-center detection) and add a way to reflect it back on the page. Options are in `data-audit.md` §4.
+   - Settle first: this needs an **outside lookup service**, so each visitor's IP goes to a third party. That conflicts with the footer's "All browser-based processing on this page is local," and it was set aside earlier for that reason.
+   - Follow the single-session rule below: keep IP data in page memory only.
+2. **Feed it into the inference engine.** New Tier 1 rules for IP data, and city-level location for rules currently limited to the time-zone region (see `inference-map.md` Part 1, problem 1). Can unlock bolder Tier 2 conclusions.
+3. **Deep research step.** Source every claim, fill the `[STAT]` placeholders, and build out more insightful inferences, including the "Increase impact" goal under Inference engine in `PRODUCT.md`.
+
+Also pending: test visitors p05/p06 need updating after the GA removal (don't run tests unless asked, see Learnings).
+
 ## Project rules
 
 - **Local recorders keep nothing beyond a single session.** Data recorded about a visitor (`simGA`, `B`, `X` and any future recorder) stays in page memory only: never written to cookies, localStorage, IndexedDB or a server. The page's own demonstration cookies are a separate question, flagged in `PRODUCT.md` to revisit.

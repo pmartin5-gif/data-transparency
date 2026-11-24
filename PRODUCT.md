@@ -13,6 +13,7 @@ Loose notes on where this could go.
 ### What we can learn (the most interesting area)
 - Find more data we can collect from visitors
 - Find more inferences we can draw about the user from that data
+- **Next steps (agreed 2026-11-24):** (1) IP address collection and reflection, which needs an outside lookup service, so settle the third-party trade-off and the footer's "processing is local" claim first; (2) feed IP data into the inference engine, including city-level location; (3) the deep research step below. Also in `CLAUDE.md` → "Next up."
 - **Inference engine** (built in `index.html`; design in `inference-map.md`)
   - Piecemeal rules (1–3 signals → one statement) plus threshold conclusions for bolder claims, with a light assembly step.
   - Reflections about the visitor only; say nothing where nothing can be inferred (except conspicuous absence from privacy tools).
