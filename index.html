@@ -634,6 +634,16 @@ function xCpuBenchmark(){
   }catch(e){ return null; }
 }
 
+async function xKeyboardLayout(){
+  // Characters produced by a few telltale keys (Chromium, secure context only)
+  if(!nav.keyboard||!nav.keyboard.getLayoutMap) return null;
+  try{
+    const m=await nav.keyboard.getLayoutMap(), out={};
+    ['KeyQ','KeyW','KeyY','KeyZ','KeyA','Semicolon','Quote','BracketLeft'].forEach(k=>{ out[k]=m.get(k)??null; });
+    return out;
+  }catch(e){ return null; }
+}
+
 async function collectExtended(){
   Object.assign(X, {
     locale: xLocale(),
@@ -648,16 +658,17 @@ async function collectExtended(){
   const c1=xCanvasRead(), c2=xCanvasRead();
   X.canvasCheck = { read1:c1, read2:c2, stable: c1!==null && c1===c2 };
 
-  const [clientHints, webgpu, storage, bluetoothAvailable, audioRecheck] = await Promise.all([
-    xClientHints(), xWebGPU(), xStorage(), xBluetooth(), getAudioFingerprint(),
+  const [clientHints, webgpu, storage, bluetoothAvailable, audioRecheck, keyboardLayout] = await Promise.all([
+    xClientHints(), xWebGPU(), xStorage(), xBluetooth(), getAudioFingerprint(), xKeyboardLayout(),
   ]);
-  Object.assign(X, { clientHints, webgpu, storage, bluetoothAvailable });
+  Object.assign(X, { clientHints, webgpu, storage, bluetoothAvailable, keyboardLayout, gpc: nav.globalPrivacyControl ?? null });
   X.audioCheck = { read1:S.audio ?? null, read2:audioRecheck, stable: S.audio!=null && S.audio!=='blocked' && S.audio===audioRecheck };
 
   await new Promise(r=>setTimeout(r,1500)); // give the GA script time to arrive (or fail)
   X.tracker = xTrackerCheck();
   X.cpu = xCpuBenchmark();
   X.ready = true;
+  refreshProfile();
 }
 if(document.readyState==='complete') setTimeout(collectExtended,0);
 else window.addEventListener('load',()=>setTimeout(collectExtended,0));
@@ -813,177 +824,305 @@ function countSignals() {
 }
 
 // ── PROFILE ENGINE ──
-function buildProfile() {
-  const tz=S.tz, lang=S.lang, langs=S.langs;
-  const tzMap={'New_York':'New York','Chicago':'Chicago','Los_Angeles':'Los Angeles','San_Francisco':'the Bay Area','Denver':'Denver','Phoenix':'Phoenix','Seattle':'Seattle','Boston':'Boston','Miami':'Miami','Atlanta':'Atlanta','Austin':'Austin','Dallas':'Dallas','Portland':'Portland','London':'London','Paris':'Paris','Berlin':'Berlin','Amsterdam':'Amsterdam','Stockholm':'Stockholm','Madrid':'Madrid','Rome':'Rome','Zurich':'Zurich','Tokyo':'Tokyo','Seoul':'Seoul','Sydney':'Sydney','Melbourne':'Melbourne','Toronto':'Toronto','Vancouver':'Vancouver','Montreal':'Montreal','Mumbai':'Mumbai','Singapore':'Singapore','Dubai':'Dubai'};
-  const tzKey=Object.keys(tzMap).find(k=>tz.includes(k));
-  const city=tzKey?tzMap[tzKey]:(tz.split('/').pop()||'').replace(/_/g,' ')||null;
+// ══ INFERENCE ENGINE START ══
+// Implements inference-map.md (Tier 1 rules, Tier 2 conclusions, assembly).
+// Pure: reads only its argument, never page globals or the DOM, so
+// tests/run-personas.js can run exactly this code against test visitors.
+// Statements are plain text; the renderer escapes them.
+const ENG_SECTIONS=['device','software','place','time','history','privacy','access','conclusion'];
+const ENG_CONF_RANK={Obs:0,Strong:1,Likely:2,Weak:3};
+const ENG_MAX_WEAK=2;
+const ENG_US_TZ=/^(America\/(New_York|Detroit|Chicago|Denver|Phoenix|Boise|Los_Angeles|Anchorage|Juneau|Sitka|Nome|Yakutat|Metlakatla|Adak|Menominee|Indiana\/.+|Kentucky\/.+|North_Dakota\/.+)|Pacific\/Honolulu)$/;
+const ENG_TZ_COUNTRY={'Europe/London':'GB','Europe/Dublin':'IE','Europe/Paris':'FR','Europe/Berlin':'DE','Europe/Madrid':'ES','Europe/Rome':'IT','Europe/Amsterdam':'NL','Europe/Brussels':'BE','Europe/Lisbon':'PT','Europe/Stockholm':'SE','Europe/Oslo':'NO','Europe/Copenhagen':'DK','Europe/Helsinki':'FI','Europe/Warsaw':'PL','Europe/Prague':'CZ','Europe/Vienna':'AT','Europe/Zurich':'CH','Europe/Athens':'GR','Europe/Istanbul':'TR','Europe/Kyiv':'UA','Europe/Moscow':'RU','America/Toronto':'CA','America/Vancouver':'CA','America/Montreal':'CA','America/Mexico_City':'MX','America/Bogota':'CO','America/Lima':'PE','America/Santiago':'CL','America/Sao_Paulo':'BR','America/Argentina/Buenos_Aires':'AR','America/Puerto_Rico':'PR','Asia/Tokyo':'JP','Asia/Seoul':'KR','Asia/Shanghai':'CN','Asia/Hong_Kong':'HK','Asia/Taipei':'TW','Asia/Kolkata':'IN','Asia/Manila':'PH','Asia/Singapore':'SG','Asia/Jakarta':'ID','Asia/Ho_Chi_Minh':'VN','Asia/Bangkok':'TH','Asia/Dubai':'AE','Asia/Jerusalem':'IL','Australia/Sydney':'AU','Australia/Melbourne':'AU','Pacific/Auckland':'NZ','Africa/Lagos':'NG','Africa/Cairo':'EG','Africa/Johannesburg':'ZA','Africa/Nairobi':'KE'};
+const ENG_CC_FONTS=['Acumin Pro','Adobe Caslon Pro','Trajan Pro','Bickham Script Pro','Kozuka Gothic Pro'];   // install with Creative Cloud apps
+const ENG_ADOBE_FONTS=['Minion Pro','Myriad Pro','Adobe Garamond Pro'];                                     // may come with Acrobat Reader too
+const ENG_DEV_FONTS=['Fira Code','JetBrains Mono','Hack','Inconsolata','IBM Plex Mono'];                     // Cascadia Code excluded (ships with Windows Terminal)
+
+function engTzCountry(tz){ return ENG_US_TZ.test(tz)?'US':(ENG_TZ_COUNTRY[tz]||null); }
+function engName(code,type){ try{ return new Intl.DisplayNames(['en'],{type}).of(code)||code; }catch(e){ return code; } }
+function engList(a,conj){ conj=conj||'and'; return a.length<=1?a.join(''):a.slice(0,-1).join(', ')+' '+conj+' '+a[a.length-1]; }
+function engTime(h,m){ return `${((h+11)%12)+1}:${String(m||0).padStart(2,'0')} ${h<12?'AM':'PM'}`; }
+function engOrdinal(n){ const s=['th','st','nd','rd'], v=n%100; return n+(s[(v-20)%10]||s[v]||s[0]); }
+function engDuration(ms){ const s=Math.round(ms/1000); if(s<60) return s+' second'+(s===1?'':'s'); const m=Math.round(s/60); return m+' minute'+(m===1?'':'s'); }
+function engDate(sec){ return new Date(sec*1000).toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'}); }
+
+function profileZoneName(tz){
+  if(!tz) return '';
+  if(tz==='UTC'||tz==='Etc/UTC') return 'Coordinated Universal Time (UTC)';
+  try{
+    const part=new Intl.DateTimeFormat('en-US',{timeZone:tz,timeZoneName:'longGeneric'}).formatToParts(new Date()).find(p=>p.type==='timeZoneName');
+    if(part&&!/^GMT/.test(part.value)) return part.value;
+  }catch(e){}
+  return tz;
+}
+function profileLanguageNames(langs){
+  const seen=new Set(), out=[];
+  (langs||[]).forEach(l=>{
+    const base=(l||'').split('-')[0].toLowerCase();
+    if(!base||seen.has(base)) return;
+    seen.add(base); out.push(engName(base,'language'));
+  });
+  return out;
+}
+function engGpuName(r){
+  if(!r) return '';
+  let s=String(r);
+  const m=s.match(/^ANGLE \((.*)\)$/); if(m){ const parts=m[1].split(', '); s=parts[1]||parts[0]; }
+  s=s.replace(/^ANGLE Metal Renderer: /,'').replace(/\s*\(0x[0-9a-f]+\)/ig,'').replace(/ Direct3D.*$/,'').replace(/ vs_\d.*$/,'').replace(/ OpenGL.*$/,'').replace(/\/PCIe\/SSE2$/,'').replace(/\((R|TM)\)/gi,'').replace(/\s*\([^)]*\)\s*$/,'').replace(/\s{2,}/g,' ').trim();
+  if(!s||/^Apple GPU$|SwiftShader|llvmpipe|Software|Microsoft Basic Render/i.test(s)) return '';
+  return s;
+}
+function engKeyboard(k){
+  if(!k) return null;
+  const q=(k.KeyQ||'').toLowerCase(), y=(k.KeyY||'').toLowerCase(), a=(k.KeyA||'').toLowerCase(), sc=(k.Semicolon||'').toLowerCase();
+  if(/[Ѐ-ӿ]/.test(q+a)) return {name:'Cyrillic', langs:['ru','uk','be','bg','sr','mk','kk']};
+  if(/[Ͱ-Ͽ]/.test(q+a)) return {name:'Greek', langs:['el']};
+  if(/[֐-׿]/.test(q+a)) return {name:'Hebrew', langs:['he']};
+  if(/[؀-ۿ]/.test(q+a)) return {name:'Arabic', langs:['ar','fa','ur']};
+  if(q==='a') return {name:'French-style AZERTY', langs:['fr']};
+  if(y==='z') return {name:'German-style QWERTZ', langs:['de','cs','sk','hu','sl','hr']};
+  if(sc==='ñ') return {name:'Spanish', langs:['es']};
+  if(sc==='ç') return {name:'Portuguese', langs:['pt']};
+  if(sc==='ò') return {name:'Italian', langs:['it']};
+  if(sc==='ş') return {name:'Turkish', langs:['tr']};
+  if(sc==='ö'||sc==='ø'||sc==='æ') return {name:'Nordic', langs:['sv','no','nb','nn','da','fi','de']};
+  return null; // US/UK-style QWERTY or unknown: nothing to say
+}
+
+// ── T1-27 (live): attention this visit ──
+function inferLive(B){
+  B=B||{}; const out=[];
+  const copies=B.copies||[];
+  if(copies.length){ let t=copies[copies.length-1].text.replace(/\s+/g,' '); if(t.length>140) t=t.slice(0,140)+'…'; out.push(`You copied: “${t}”${/[.!?…]$/.test(t)?'':'.'}`); }
+  const tab=B.tab||{};
+  if(tab.hiddenCount>0) out.push(`You’ve left this tab ${tab.hiddenCount===1?'once':tab.hiddenCount+' times'}, for ${engDuration(tab.awayMs||0)} in total.`);
+  const secs=Object.entries(B.sectionsMs||{}).sort((a,b)=>b[1]-a[1]);
+  if(secs.length&&secs[0][1]>=10000) out.push(`You’ve spent longest on “${secs[0][0]}” (${engDuration(secs[0][1])}).`);
+  return { ids: out.length?['T1-27']:[], text: out.join(' ') };
+}
+
+function inferProfile(D){
+  const S=D.S||{}, X=D.X||{}, B=D.B||{}, C=D.cookies||{};
+  const st=[];
+  const add=(id,group,section,topic,conf,text,extra)=>st.push(Object.assign({id,group,section,topic,conf,text},extra||{}));
+  const tz=S.tz||'', isUS=ENG_US_TZ.test(tz), zone=profileZoneName(tz);
+  const langTags=(S.langs&&S.langs.length?S.langs:[S.lang||'']);
+  const primary=langTags[0]||'', primaryBase=primary.split('-')[0].toLowerCase();
+  const fonts=new Set([...(S.fonts||[]), ...((X.fontsExtended&&X.fontsExtended.found)||[])]);
+  const ch=X.clientHints||null;
+  const mp=X.mediaPrefs||{};
+
+  // ── Device (D) ──
+  if(S.isAndroid&&ch&&ch.model) add('T1-01','D','device','device-id','Obs',`Your phone reports its model as ${ch.model}.`,{model:ch.model});
+  if(S.isIOS&&S.isMobile) add('T1-02','D','device','device-id', isUS?'Likely':'Obs',
+    'You’re on an iPhone.'+(isUS?' In the US, owning an iPhone is one of the strongest single predictors of high household income.':''), {premium:isUS});
+  const rawGpu=(X.webgl&&X.webgl.unmaskedRenderer)||'';
+  const chip=rawGpu.match(/Apple (M\d+)(?: (Pro|Max|Ultra))?/);
+  if(chip) add('T1-04','D','device','device-id','Strong',
+    `Your Mac runs on an Apple ${chip[1]}${chip[2]?' '+chip[2]:''} chip${chip[2]?', from the higher-priced tiers of Apple’s lineup':''}.`, {premium:!!chip[2]});
+  else { const gpu=engGpuName(rawGpu)||(X.webgpu&&X.webgpu.description)||''; if(gpu&&!S.isMobile) add('T1-03','D','device','device-id','Obs',`Your computer’s graphics hardware identifies itself as ${gpu}.`); }
+  if((mp.colorGamut==='p3'||mp.colorGamut==='rec2020')&&mp.dynamicRange==='high'&&!S.isMac&&!S.isIOS)
+    add('T1-05','D','device','display','Likely','Your screen supports wide colour and HDR, features found mostly on higher-priced displays.',{premium:true});
+  if(S.isWin&&ch&&ch.platformVersion){ const major=parseInt(ch.platformVersion,10);
+    if(major>=1&&major<13) add('T1-06','D','device','device-age','Strong','Your computer runs Windows 10, which stopped receiving free security updates on October 14, 2025.',{costSignal:true});
+    else if(major===0) add('T1-06','D','device','device-age','Strong','Your computer runs a version of Windows older than 10, which no longer receives security updates.',{costSignal:true}); }
+  if(S.isAndroid&&S.ram&&S.ram<=2) add('T1-07','D','device','cost','Likely',`Your phone has ${S.ram} GB of memory, which is typical of lower-cost models.`,{lowCost:true});
+  if(S.conn&&S.conn.save) add('T1-08','D','device','data-plan','Likely','Your browser asks websites to use less data, a setting usually turned on to manage a limited data plan.',{costSignal:true});
+  if(X.screen&&X.screen.isExtended===true) add('T1-09','D','device','monitors','Obs','You’re using more than one monitor.');
+
+  // ── Installed software (W) ──
+  const dev=ENG_DEV_FONTS.filter(f=>fonts.has(f));
+  if(dev.length) add('T1-18','W','software','dev-fonts','Likely',
+    `Your computer has ${engList(dev)} installed, ${dev.length>1?'programming fonts that don’t':'a programming font that doesn’t'} come with any operating system. People who install ${dev.length>1?'them':'it'} usually write code.`);
+  const cc=ENG_CC_FONTS.filter(f=>fonts.has(f)), adobe=ENG_ADOBE_FONTS.filter(f=>fonts.has(f));
+  if(cc.length) add('T1-17','W','software','adobe','Likely',`Your computer has ${engList(cc)}, ${cc.length>1?'fonts that come':'a font that comes'} with Adobe’s Creative Cloud apps, a paid subscription.`,{paidSoftware:true});
+  else if(adobe.length) add('T1-17','W','software','adobe','Obs',`Your computer has ${engList(adobe)}, ${adobe.length>1?'fonts':'a font'} distributed with Adobe software.`);
+  const voiceLangs=[...new Set((X.voicesList||[]).filter(v=>v.local).map(v=>(v.lang||'').split(/[-_]/)[0].toLowerCase()).filter(b=>b&&b!=='en'))];
+  if(S.isWin&&voiceLangs.length) add('T1-13','W','software','voices','Likely',   // Windows only: macOS/iOS/Android ship many languages by default
+    `Your computer has text-to-speech voices installed for ${engList(voiceLangs.map(b=>engName(b,'language')))}, which usually come from language packs added by the owner.`,{supportLangs:voiceLangs});
+  const kb=engKeyboard(X.keyboardLayout);
+  if(kb) add('T1-30','W','software','keyboard','Obs',`Your keyboard is set to a ${kb.name} layout.`,{supportLangs:kb.langs});
+
+  // ── Place (L, Z) ──
+  if(zone) add('T1-10','Z','place','zone','Obs',`Your device’s clock is set to ${zone}.`);
+  const names=profileLanguageNames(langTags);
+  if(names.length>1) add('T1-11','L','place','languages','Obs',`Your browser is set to ${names[0]} first, then ${engList(names.slice(1))}.`);
+  else if(names.length===1&&primaryBase!=='en') add('T1-11','L','place','languages','Obs',`Your browser is set to ${names[0]}.`);
+  const regionM=primary.match(/-([A-Z]{2})(?:-|$)/), langRegion=regionM?regionM[1]:null, tzCountry=engTzCountry(tz);
+  if(langRegion&&tzCountry&&langRegion!==tzCountry)
+    add('T1-12','L','place','lang-region','Likely',`Your browser’s language is set for ${engName(langRegion,'region')}, and your clock is set to ${zone}.`,{langRegion});
+  const loc=X.locale||{};
+  if(isUS&&loc.locale==='en-US'&&(loc.hourCycle==='h23'||loc.hourCycle==='h24'))
+    add('T1-14','L','place','clock','Weak','Your device shows time in 24-hour format, which is uncommon in the US.');
+
+  // ── Time (T) ──
+  const vt=B.visitTime||{}, h=vt.hour, dayName=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'][vt.dayOfWeek];
+  if(typeof h==='number'){
+    if(h<5) add('T1-16','T','time','time-of-visit','Obs',`It’s ${engTime(h,vt.minute)} where you are.`);
+    else add('T1-15','T','time','time-of-visit','Obs',`You’re on ${S.isMobile?'a mobile device':'a computer'} at ${engTime(h,vt.minute)} on a ${dayName}.`,
+      {atWork:!S.isMobile&&vt.dayOfWeek>=1&&vt.dayOfWeek<=5&&h>=9&&h<17});
+  }
+  if(X.webdriver===true) add('T1-19','T','time','automation','Strong','This page is being read by automated software, not directly by a person.');
+
+  // ── History (H) ──
+  const vis=parseInt(C.vis,10)||1;
+  const gaM=(C.ga||'').match(/^GA1\.\d\.\d+\.(\d{9,10})$/);
+  const hist=[];
+  if(vis>1) hist.push(`This is your ${engOrdinal(vis)} visit.`);
+  if(gaM){ const sec=+gaM[1], today=new Date(), d=new Date(sec*1000);
+    hist.push(d.toDateString()===today.toDateString()?'Google assigned your browser an ID on this site today.':`Google first assigned your browser an ID on this site on ${engDate(sec)}.`); }
+  if(hist.length) add('T1-26','H','history','returns','Obs',hist.join(' '));
+  if(S.histLen>1) add('T1-28','H','history','tab-history','Obs',
+    S.histLen>=50?'This tab had at least 49 pages in its history before you arrived.':`This tab had ${S.histLen-1} ${S.histLen-1===1?'page':'pages'} in its history before you arrived.`);
   const refHost=S.ref?(S.ref.split('/')[2]||''):'';
-  const isEUtz=tz.startsWith('Europe/'), isUStz=tz.startsWith('America/');
-  const isSouthernUS=['Chicago','Dallas','Austin','Houston','Nashville','Atlanta','Phoenix'].some(c=>tz.includes(c));
-  const dayName=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'][S.dow];
-  const localIP=S.webrtc?S.webrtc.find(ip=>/^(192\.168|10\.|172\.(1[6-9]|2\d|3[01]))/.test(ip)):null;
-  const isCorporateNet=localIP&&localIP.startsWith('10.');
+  if(!S.ref) add('T1-29','H','history','referrer','Obs','You arrived without a referrer: you typed the address, used a bookmark, or followed a link from an app or site that doesn’t pass one on.');
+  else if(/(^|\.)google\./.test(refHost)) add('T1-29','H','history','referrer','Obs','You arrived from a Google search. Your search terms weren’t passed to this page.');
+  else add('T1-29','H','history','referrer','Obs',`You arrived from ${refHost}.`);
 
-  // Font-based profession signals
-  const fonts=S.fonts||[];
-  const hasDevFonts=fonts.some(f=>['Fira Code','JetBrains Mono','Source Code Pro'].includes(f));
-  const hasAdobeFonts=fonts.some(f=>['Minion Pro','Myriad Pro','Adobe Garamond Pro'].includes(f));
-  const hasDesignFonts=fonts.some(f=>['Futura','Avenir','Proxima Nova'].includes(f));
-  const hasOfficeFonts=fonts.some(f=>['Gill Sans','Franklin Gothic Medium'].includes(f));
-  const isPremiumHardware=S.isMac&&S.hiRes&&S.highEnd;
-  const isHighEndDisplay=S.colorGamut==='P3'||S.colorGamut==='Rec2020'||S.hdr;
-  const adblocked=S.adblock===true;
-  const canvasBlocked=S.canvas==='blocked', audioBlocked=S.audio==='blocked';
+  // ── Privacy (P) ──
+  const canvasBlocked=S.canvas==='blocked', canvasRandom=!canvasBlocked&&S.canvasStable===false;
+  const audioBlocked=S.audio==='blocked', audioRandom=!audioBlocked&&X.audioCheck&&X.audioCheck.stable===false&&X.audioCheck.read2&&X.audioCheck.read2!=='blocked';
+  const fp=[], fpSignals=[];
+  if(canvasBlocked){ fp.push('Your browser refused to let this page read back a hidden drawing, which blocks canvas fingerprinting.'); fpSignals.push('canvas fingerprint'); }
+  else if(canvasRandom){ fp.push('Asked to draw the same hidden image twice, your browser gave two different answers. It is disguising your device.'); fpSignals.push('canvas fingerprint'); }
+  else if(S.canvas) fp.push(`This page drew a hidden image in your browser. Tiny differences in how your graphics hardware, operating system and fonts render it produce a fingerprint, token ${S.canvas.slice(0,8)}, that stays the same when you clear your cookies.`);
+  if(audioBlocked){ fp.push('Your browser also blocked the audio fingerprint.'); fpSignals.push('audio fingerprint'); }
+  else if(audioRandom){ fp.push('Its audio fingerprint also changed between two reads.'); fpSignals.push('audio fingerprint'); }
+  else if(S.audio) fp.push(`It also processed a sound without playing it; the result, ${String(S.audio).slice(0,10)}, varies between devices and browsers.`);
+  if(fp.length) add('T1-21','P','privacy','fingerprint', fpSignals.length?'Strong':'Obs', fp.join(' '), {blocking:fpSignals});
+  const gaBlocked=X.tracker&&X.tracker.gaScriptLoaded===false;
+  if(gaBlocked||S.adblock){
+    const notStopped=[]; if(!canvasBlocked&&!canvasRandom&&S.canvas) notStopped.push('the canvas fingerprint'); if(!audioBlocked&&!audioRandom&&S.audio) notStopped.push('the audio result');
+    const t=[]; if(gaBlocked) t.push('Your browser blocked this page’s Google Analytics. The events in the log never reached Google.');
+    else t.push('An ad blocker is active in your browser.');
+    if(notStopped.length) t.push(`${gaBlocked?'Your blocker':'It'} did not stop ${notStopped.join(' or ')}.`);
+    add('T1-20','P','privacy','blockers','Obs',t.join(' '),{blocking:[gaBlocked?'Google Analytics':null, S.adblock?'ads':null].filter(Boolean)});
+  }
+  const utc=tz==='UTC'||tz==='Etc/UTC', letterbox=S.vw%200===0&&S.vh%100===0;
+  if(utc&&primaryBase==='en'&&(letterbox||canvasRandom))
+    add('T1-22','P','privacy','tor','Strong', letterbox
+      ?'Your browser reports UTC time and a rounded window size, the pattern produced by Tor Browser’s protections.'
+      :'Your browser reports UTC time and disguises its fingerprint, the pattern of Tor Browser or Firefox’s strictest privacy mode.',
+      {blocking:['your real time zone'].concat(letterbox?['your window size']:[]), tor:true});
+  const req=[]; if(S.dnt==='1') req.push('You’ve asked websites not to track you (Do Not Track).');
+  if(X.gpc===true) req.push('Your browser sends Global Privacy Control, an opt-out signal recognized under California law and in several other states.');
+  if(req.length) add('T1-23','P','privacy','requests','Obs',req.join(' '),{requests:req.length});
 
-  // ── LOCATION ──
-  let locationProfile='';
-  const langMismatch = !lang.startsWith('en') && isUStz;
-  const multiLangUS = langs.length > 2 && isUStz;
-  if(tz.includes('New_York')) {
-    locationProfile=`Your device and timezone place you in New York. ${S.highEnd&&S.isMac?'The hardware you are using is disproportionately common in Manhattan and Brooklyn — the concentration of high-end Mac devices in that market is high enough that it functions as a neighborhood-level signal on its own.':''} The combination of location, device, and browsing time has sorted you into advertising segments that carry inferred attributes — income bracket, likely neighborhood, probable commute mode — without you having disclosed any of them.`;
-  } else if(tz.includes('San_Francisco')||(tz.includes('Los_Angeles')&&S.highEnd&&S.isMac)) {
-    locationProfile=`Your device and timezone place you in the Bay Area or Los Angeles — the region that designed and deployed most of the infrastructure this page is describing. ${hasDevFonts?'Your font set includes typefaces used almost exclusively by software developers. The people who built these systems, and continue to maintain them, are statistically likely to be in the same professional category as you.':''} The engineers who built these tracking systems work within miles of where you're sitting.`;
-  } else if(tz.includes('Austin')||tz.includes('Dallas')||tz.includes('Houston')) {
-    locationProfile=`Your device and timezone place you in Texas, which has no comprehensive state data privacy law. ${isCorporateNet?'Your local network address indicates a corporate or enterprise environment — you may be reading this at work, on a network whose traffic is logged by your employer as well as by the platforms you visit.':''} Following Dobbs, researchers demonstrated that location data showing visits to reproductive health clinics was available for purchase from commercial brokers without a warrant requirement. Several Texas legislators have since moved to codify that access for prosecutors.`;
-  } else if(tz.includes('London')) {
-    locationProfile=`Your device and timezone place you in London. You hold more formal data rights than Americans do — the UK GDPR is real legislation. ${langs.length>1?'Your language configuration suggests multilingual use, which in this market correlates with international professional or immigrant background — a demographic that commercial data vendors address with specific targeting categories.':''} The commercial surveillance infrastructure you are embedded in is, for most practical purposes, the same one operating everywhere else.`;
-  } else if(isEUtz) {
-    locationProfile=`Your device and timezone place you in Europe, where you nominally hold the strongest data rights of anyone on earth. The GDPR established a meaningful legal framework. What it did not anticipate was the scale of the industry it was meant to regulate, or the creativity with which "legitimate interest" would be interpreted to sidestep consent requirements.`;
-  } else if(multiLangUS) {
-    locationProfile=`Your device is in a US timezone and your browser is configured with ${langs.length} language preferences — a pattern that correlates strongly with bilingual households and immigrant communities. Commercial data vendors build specific targeting categories around this combination, selling it to financial services, remittance companies, and political campaigns that want to reach first- and second-generation immigrant populations.`;
-  } else if(city) {
-    locationProfile=`Your device and timezone place you in the ${city} area. ${isCorporateNet?'Your local IP address begins with 10.x — a range reserved for private enterprise networks, suggesting you are on a corporate or institutional network. Your employer\'s IT infrastructure is logging the same traffic this page is.':''} The combination of hardware, location, language, and browsing time has already produced a profile specific enough for individual-level targeting.`;
-  } else {
-    locationProfile=`Your precise location was not captured by timezone alone, but your device, language, and connection type have placed you in a regional market with enough specificity for individual-level targeting. Anonymity, in this context, is a matter of degree rather than kind.`;
+  // ── Accessibility (A) ──
+  const acc=[], vis2=[];
+  if(mp.forcedColors===true){ acc.push('force high-contrast colours'); vis2.push('forced'); }
+  if(mp.contrast==='more'){ acc.push('increase contrast'); vis2.push('contrast'); }
+  if(mp.invertedColors===true){ acc.push('invert colours'); vis2.push('inverted'); }
+  if(S.reducedMotion) acc.push('reduce motion');
+  if(acc.length) add('T1-24','A','access','a11y-settings','Obs',`Your device is set to ${engList(acc)}.`,{visual:vis2});
+  const rf=['OpenDyslexic','Atkinson Hyperlegible'].filter(f=>fonts.has(f));
+  if(rf.length) add('T1-25','A','access','a11y-fonts','Likely',
+    `You’ve installed ${engList(rf)}, ${rf.length>1?'typefaces':'a typeface'} designed for ${rf.includes('OpenDyslexic')&&rf.includes('Atkinson Hyperlegible')?'readers with dyslexia and low vision':rf[0]==='OpenDyslexic'?'readers with dyslexia':'readers with low vision'}.`,{readingFonts:rf});
+
+  // ── Tier 2 ──
+  const get=id=>st.find(s=>s.id===id), concl=[];
+  const premium=st.filter(s=>s.premium), paid=st.filter(s=>s.paidSoftware);
+  if(isUS&&premium.length&&paid.length)
+    concl.push({id:'T2-A',conf:'Likely',absorbs:[...premium,...paid].map(s=>s.id),text:'Your equipment and software are consistent with a higher-income household.'});
+  const low=get('T1-07'), costs=st.filter(s=>s.costSignal);
+  if(low&&costs.length)
+    concl.push({id:'T2-B',conf:'Likely',absorbs:[low.id,...costs.map(s=>s.id)],text:'Taken together, your phone and its settings suggest you’re managing costs carefully.'});
+  const support=st.filter(s=>s.supportLangs&&s.supportLangs.includes(primaryBase));
+  if(isUS&&primaryBase&&primaryBase!=='en'&&get('T1-11')&&support.length){
+    const ln=engName(primaryBase,'language');
+    concl.push({id:'T2-C',conf:'Likely',absorbs:['T1-11',...(get('T1-12')?['T1-12']:[]),...support.map(s=>s.id)],
+      text:`You most likely speak ${ln} at home.`+(primaryBase==='es'?' Most people in the US who speak Spanish at home identify as Hispanic or Latino.':'')});
+  }
+  const m1=get('T1-01'), m12=get('T1-12');
+  const samsung=m1&&m1.model.match(/^SM-[A-Z]\d{3,4}([A-Z0-9]{0,3})$/i);
+  if(isUS&&m12&&samsung&&samsung[1]&&!/^(U|W)/i.test(samsung[1]))
+    concl.push({id:'T2-D',conf:'Likely',absorbs:['T1-01','T1-12'],
+      text:`Your phone’s model number marks it as an international version, not one sold by US carriers. Your device was most likely bought or set up outside the US.`});
+  const a24=get('T1-24'), a25=get('T1-25');
+  const mech=[...((a24&&a24.visual)||[]),...((a25&&a25.readingFonts)||[])];
+  const strong=mech.some(x=>x==='forced'||x==='inverted'||x==='OpenDyslexic');
+  if(mech.length>=2||strong){
+    const kinds=[]; if((a24&&a24.visual.length)||(a25&&a25.readingFonts.includes('Atkinson Hyperlegible'))) kinds.push('low vision'); if(a25&&a25.readingFonts.includes('OpenDyslexic')) kinds.push('dyslexia');
+    concl.push({id:'T2-E',conf:'Likely',absorbs:[a24,a25].filter(Boolean).map(s=>s.id),text:`Your settings indicate you likely have ${engList(kinds,'or')}.`});
+  }
+  const pst=st.filter(s=>s.group==='P');
+  const blocked=[...new Set(pst.flatMap(s=>s.blocking||[]))], requests=pst.reduce((n,s)=>n+(s.requests||0),0);
+  if(blocked.length&&blocked.length+requests>=2){
+    const tor=pst.some(s=>s.tor);
+    const visible=[tor?null:'your time zone',tor?null:'screen size','language settings','what you do on this page'].filter(Boolean);
+    concl.push({id:'T2-F',conf:'Strong',absorbs:pst.filter(s=>(s.blocking&&s.blocking.length)||s.requests).map(s=>s.id),
+      text:`You’re actively hiding from trackers, and it’s partly working. Blocked or disguised: ${engList(blocked)}. Still visible to this page: ${engList(visible)}.`});
   }
 
-  // ── SES / WEALTH ──
-  let sesNarrative='';
-  if(isPremiumHardware&&isHighEndDisplay&&(hasAdobeFonts||hasDevFonts)) {
-    const softwareClue=hasAdobeFonts?'Adobe Creative Cloud (approximately $60/month)':hasDevFonts?'professional developer tooling':'premium software';
-    sesNarrative=`The combined hardware and software profile of your device places you in the top household income bracket with high confidence. A P3-gamut Retina display, ${S.cores}-core CPU, and an installed font set that includes ${softwareClue} represent a total equipment and subscription cost that correlates almost exclusively with professional creative or technical occupations. Advertisers pay two to four times the average CPM to reach this segment. Political campaigns pay more.`;
-  } else if(isPremiumHardware||isHighEndDisplay) {
-    sesNarrative=`Your hardware is premium. ${S.colorGamut==='P3'?'A P3-gamut display is found almost exclusively on Apple devices released after 2016 and high-end professional monitors — a market that skews heavily toward creative and technical professionals with above-median income.':''} ${S.conn&&S.conn.downlink>20?'Your connection speed ('+S.conn.downlink+'Mbps) is consistent with a fiber broadband plan, which in demographic models correlates with homeownership and income stability.':''} The device tier alone puts you in an advertising segment that commands a significant premium.`;
-  } else if(S.conn&&S.conn.save) {
-    sesNarrative=`Your browser has Save-Data mode enabled, a setting that indicates a limited or metered data plan. Commercial data vendors use this signal as a socioeconomic indicator — it correlates with prepaid mobile plans, lower-income households, and in some markets, rural or underserved areas with limited broadband access. Advertisers use it to price inventory differently: lower bids, different creative, different offers.`;
-  } else if(S.isMac) {
-    sesNarrative=`Mac ownership correlates with college education, urban residence, and above-median income in every major demographic study conducted since 2010. That correlation is well-known to every advertising platform, and it is baked into the targeting logic that determines which ads you see, which financial products you are offered, and at what interest rates.`;
-  } else {
-    sesNarrative=`Your device profile places you in the median hardware tier — the largest single segment by volume in the advertising market, and accordingly the most extensively profiled. The difference between you and a high-income target is not in how much data is collected but in how much advertisers bid to reach you.`;
+  // ── Assembly ──
+  const suppressed=[];
+  if(concl.some(c=>c.id==='T2-A')&&concl.some(c=>c.id==='T2-B')){
+    for(const id of ['T2-A','T2-B']){ concl.splice(concl.findIndex(c=>c.id===id),1); suppressed.push({id,reason:'contradicts '+(id==='T2-A'?'T2-B':'T2-A')+'; facts shown instead'}); }
   }
-
-  // ── PROFESSION ──
-  let professionNarrative='';
-  if(S.isLinux&&hasDevFonts) {
-    professionNarrative=`Your operating system is Linux and your font set includes ${fonts.filter(f=>['Fira Code','JetBrains Mono','Source Code Pro'].includes(f)).join(', ')} — typefaces installed almost exclusively by software developers. This combination produces a profession inference with unusually high confidence: you are almost certainly working in software engineering or a closely adjacent technical field. ${S.devtools?'Your developer tools are currently open, which confirms this.':''} The advertising value of this profile is high — software engineers are among the most heavily targeted professional demographics, primarily by B2B SaaS products, financial platforms, and technical recruiters.`;
-  } else if(hasDevFonts&&(S.isMac||S.isWin)) {
-    professionNarrative=`Your installed fonts include ${fonts.filter(f=>['Fira Code','JetBrains Mono','Source Code Pro'].includes(f)).join(', ')} — programming-specific typefaces that are not pre-installed on any consumer operating system and are not included in standard software suites. They exist on your machine because you put them there. This places you in a technical profession category with high probability. ${S.devtools?'Your browser developer tools are open, which is consistent with this.':''}`;
-  } else if(hasAdobeFonts&&hasDesignFonts) {
-    professionNarrative=`Your font set includes ${fonts.filter(f=>['Minion Pro','Myriad Pro','Adobe Garamond Pro','Futura','Avenir','Proxima Nova'].includes(f)).join(', ')}. These fonts are distributed exclusively through Adobe Creative Cloud and professional design applications — they are not available through any consumer software channel. You are almost certainly working in a creative field: graphic design, advertising, publishing, UX, or a related industry. Creative professionals are a high-value advertising segment for software vendors, agencies, and premium consumer brands.`;
-  } else if(S.media&&S.media.cameras>1&&S.media.mics>1) {
-    professionNarrative=`Your device has ${S.media.cameras} cameras and ${S.media.mics} microphones connected. This configuration — multiple input devices simultaneously — is characteristic of content creators, video producers, podcasters, and remote workers with professional home studio setups. It correlates with above-average media consumption budgets and high engagement with creator-economy platforms.`;
-  } else if(S.devtools) {
-    professionNarrative=`Your browser developer tools are currently open. This is almost exclusively a behavior of software developers, web designers, and security researchers — a demographic that advertisers classify separately from general consumers due to its above-average technical literacy and above-average income.`;
-  } else if(hasOfficeFonts&&S.isWin&&S.isWorkHours) {
-    professionNarrative=`Your device is running Windows with an extended Microsoft Office font set, accessed during standard business hours. This profile is characteristic of office-based or hybrid white-collar workers — a segment that LinkedIn, Google, and Microsoft have extensively modeled for B2B advertising and that is specifically targeted by financial, insurance, and professional services advertisers.`;
-  } else if(refHost.includes('linkedin')) {
-    professionNarrative=`You arrived here from LinkedIn, which holds your professional history in more detail than almost any other platform. The referral itself functions as a professional inference: LinkedIn users skew toward white-collar employment, and the act of clicking through to content about surveillance from a professional network suggests either professional interest in the topic or a degree of personal engagement with it that advertisers find commercially relevant.`;
-  } else {
-    professionNarrative=`Your device and behavioral profile do not produce a high-confidence profession inference from the available signals, though your hardware tier, browsing time, and content choices have been used to assign you to occupational targeting segments. These segments inform which job ads you see, which financial products are offered to you, and at what terms.`;
+  // one statement per topic (highest confidence wins)
+  const byTopic={};
+  st.forEach(s=>{ const cur=byTopic[s.topic]; if(!cur||ENG_CONF_RANK[s.conf]<ENG_CONF_RANK[cur.conf]){ if(cur) suppressed.push({id:cur.id,reason:'duplicate topic '+s.topic}); byTopic[s.topic]=s; } else suppressed.push({id:s.id,reason:'duplicate topic '+s.topic}); });
+  let kept=st.filter(s=>byTopic[s.topic]===s);
+  // weak cap
+  let weak=0; kept=kept.filter(s=>{ if(s.conf!=='Weak') return true; if(++weak<=ENG_MAX_WEAK) return true; suppressed.push({id:s.id,reason:'weak cap'}); return false; });
+  // conclusions absorb their facts (each fact goes to the first conclusion that claims it)
+  const used=new Set(), paragraphs=[];
+  const conclParas=concl.map(c=>{ const facts=c.absorbs.filter(id=>!used.has(id)).map(id=>kept.find(s=>s.id===id)).filter(Boolean); facts.forEach(s=>used.add(s.id));
+    return {section:'conclusion',ids:[...facts.map(s=>s.id),c.id],text:[...facts.map(s=>s.text),c.text].join(' ')}; });
+  for(const sec of ENG_SECTIONS){
+    if(sec==='conclusion'){ paragraphs.push(...conclParas); continue; }
+    const items=kept.filter(s=>s.section===sec&&!used.has(s.id));
+    if(items.length) paragraphs.push({section:sec,ids:items.map(s=>s.id),text:items.map(s=>s.text).join(' ')});
   }
+  return { paragraphs, zoneName:zone, refHost,
+    fired:st.map(s=>s.id), conclusions:concl.map(c=>c.id), suppressed,
+    statements:st.map(s=>({id:s.id,group:s.group,conf:s.conf,text:s.text})) };
+}
+// ══ INFERENCE ENGINE END ══
 
-  // ── FINGERPRINT / PRIVACY ──
-  let fingerprintNarrative='';
-  if(canvasBlocked||audioBlocked) {
-    fingerprintNarrative=`Your browser is blocking canvas${canvasBlocked?' (blocked)':''} and/or audio${audioBlocked?' (blocked)':''} fingerprinting. Fewer than 5% of users have these protections active. The tracking industry has responded by developing fingerprinting at the network layer — TLS handshake signatures, HTTP/2 frame ordering, and timing analysis — techniques that operate before your browser can intercept them and that no consumer privacy tool currently blocks.`;
-  } else if(adblocked&&(S.isLinux||S.devtools)) {
-    fingerprintNarrative=`You are running an ad blocker${S.isLinux?' on Linux':''}${S.devtools?', with developer tools open':''}. This places you in the top few percent of users by privacy awareness. It did not prevent this page from capturing your canvas fingerprint, audio signature, WebGL renderer, local IP address, and installed font set — none of which ad blockers are designed to intercept. The infrastructure that concerns most privacy advocates operates below the layer that ad blockers can reach.`;
-  } else if(adblocked) {
-    fingerprintNarrative=`You have an ad blocker installed. It did not prevent this page from capturing your canvas fingerprint, audio processing signature, local network address via WebRTC, or the ${fonts.length} fonts enumerated from your system. Ad blockers filter network requests; fingerprinting reads properties of your browser and hardware that are available to any script that runs before a block can occur.`;
-  } else {
-    fingerprintNarrative=`Your canvas fingerprint, audio processing signature, and WebGL renderer string were all captured successfully. The combination produces a fingerprint specific to your GPU, operating system, font rendering stack, and audio hardware. It persists across incognito mode, cookie clearing, and browser restarts. ${fonts.length>0?'The '+fonts.length+' fonts detected on your system add additional precision: font sets are highly individual and do not reset when you clear your browsing data.':''}`;
-  }
+// ── PROFILE (page glue around the inference engine) ──
+let profileShown=false;
+function engineInput(){ return { S, X, B, cookies:{ vis, ga:getCk('_ga') } }; }
+function escHtml(t){ return String(t).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 
-  // ── LOCAL NETWORK ──
-  let networkNarrative='';
-  if(localIP) {
-    const networkType=isCorporateNet?'enterprise or institutional (10.x range — typically assigned by corporate IT or VPN infrastructure)':'residential (192.168.x range — typical home router assignment)';
-    networkNarrative=`Your local network address — ${localIP} — was obtained silently via WebRTC without triggering any permission prompt. The subnet identifies your network as ${networkType}. ${isCorporateNet?'A corporate network address means your browsing is potentially visible to your employer\'s network monitoring infrastructure in addition to the commercial tracking systems described on this page.':'A residential address persists across browsing sessions and cannot be masked by a VPN — your public IP changes with a VPN, your local address does not.'} This technique is used by fraud detection vendors, advertising networks, and tracking infrastructure to correlate sessions that would otherwise appear unrelated.`;
-  } else if(S.webrtc&&S.webrtc.length>0) {
-    networkNarrative=`WebRTC probing returned ${S.webrtc.length} IP address${S.webrtc.length>1?'es':''} for your connection. This channel is used by commercial tracking infrastructure to correlate browsing sessions across VPN connections, private browsing modes, and device switches — methods most users consider effective privacy protection.`;
-  } else {
-    networkNarrative=`Your network did not leak a local IP address through WebRTC — either your browser has this protection enabled or your network configuration prevented it. ${S.conn?'Your connection ('+S.conn.type+', '+S.conn.downlink+'Mbps) still provides sufficient signal for ISP identification and regional demographic targeting.':'Your connection metadata still provides sufficient signal for regional demographic modeling.'}`;
-  }
-
-  // ── BEHAVIORAL ──
-  let behaviorNarrative='';
-  const batteryContext=S.battery&&S.battery.level<0.2?' Your battery is below 20% — a signal that has been correlated in behavioral datasets with high mobility, urgency states, and reduced purchase deliberation, all of which affect how advertisers price and target inventory in real time.':'';
-  if(S.isWorkHours&&!S.isMobile) {
-    behaviorNarrative=`It is ${S.hour<12?'late morning':'the afternoon'} on a ${dayName} and you are on a desktop. Long-form content consumption during business hours on a non-mobile device is associated with salaried employment and scheduling autonomy — the ability to browse freely during the workday is itself a demographic signal that commands a premium in B2B advertising markets.${batteryContext}`;
-  } else if(S.isLateNight) {
-    behaviorNarrative=`It is past 10pm. Late-night browsing patterns have been packaged and sold to insurance underwriters and health data brokers as a proxy for anxiety, insomnia, and sleep disorders — inferences derived not from any medical record but from the hour at which a page was loaded. ${S.histLen>10?'Your session history shows '+S.histLen+' entries, suggesting extended browsing — a pattern that reinforces this inference.':''}${batteryContext}`;
-  } else if(S.isMobile&&S.isWorkHours) {
-    behaviorNarrative=`You are on a phone during working hours. ${S.battery?'Your battery is at '+Math.round(S.battery.level*100)+'% — '+(S.battery.charging?'charging, suggesting a desk or stationary context.':'not charging, suggesting you are away from a power source and likely in transit or between locations.'):''}  The behavioral pattern of mobile browsing during business hours has been mapped by advertisers to commuters, field workers, and service industry employees — demographic segments with distinct purchasing profiles.${batteryContext}`;
-  } else if(S.isWeekend) {
-    behaviorNarrative=`You are reading this on a ${dayName}. Weekend browsing of long-form content about surveillance and data collection is a behavioral pattern that correlates with high news consumption, above-average engagement with political and policy topics, and a demographic profile that advertisers and political campaigns classify as persuadable and high-value. The fact that you are here on your own time, without an obvious professional motivation, is itself informative.${batteryContext}`;
-  } else {
-    behaviorNarrative=`The time you are reading this is a data point. Your browsing pattern — the hours you are active, the content categories you engage with, the devices you use at different times of day — constitutes a behavioral signature that advertising platforms use to model your receptivity, schedule, and lifestyle. ${S.histLen>5?'Your '+S.histLen+'-entry session history indicates this is not an isolated visit.':''}${batteryContext}`;
-  }
-
-  // ── POLITICAL / SOCIAL ──
-  let politicalNarrative='';
-  const privacyScore=(adblocked?1:0)+(S.dnt==='1'?1:0)+(canvasBlocked||audioBlocked?2:0)+(S.isLinux?1:0);
-  const multiLingual=langs.length>2;
-  if(privacyScore>=3) {
-    politicalNarrative=`The combination of your privacy tools — ${[adblocked?'ad blocker':null, S.dnt==='1'?'Do Not Track':null, (canvasBlocked||audioBlocked)?'fingerprint blocking':null, S.isLinux?'Linux OS':null].filter(Boolean).join(', ')} — produces a political and social inference. Users with this level of active privacy configuration skew strongly toward either civil-libertarian or progressive political positions in commercial voter file models. Political data vendors sell this as an "early adopter / privacy-conscious" segment and use it as a proxy for positions on tech regulation, government surveillance, and corporate accountability.`;
-  } else if(isSouthernUS&&!adblocked&&S.isWorkHours) {
-    politicalNarrative=`Your timezone places you in a state where commercial data brokers operate under fewer legal restrictions than almost anywhere else in the country. The same behavioral and demographic profile this page has assembled about you can be purchased without a warrant by law enforcement agencies in this jurisdiction, licensed to political campaigns with no disclosure requirement, and sold to insurance underwriters with no right of correction if the inferences are wrong.`;
-  } else if(multiLingual&&isUStz) {
-    politicalNarrative=`Your multilingual browser configuration in a US timezone is a signal that political data vendors actively target. Bilingual households vote at different rates, respond to different political messaging, and have been the subject of targeted disinformation campaigns — documented in the 2016 and 2020 elections — specifically because this demographic signal is cheap to identify and effective to exploit. You are in that segment.`;
-  } else if(isEUtz&&langs.length>1) {
-    politicalNarrative=`Your EU location and multilingual configuration place you in a demographic that commercial political data vendors treat as distinct from monolingual national populations. Cross-border EU residents, expats, and multilingual professionals are targeted separately — their political priorities, mobility patterns, and media consumption differ enough to command distinct campaign strategies. This inference was made from your language settings alone.`;
-  } else if(adblocked&&!isSouthernUS) {
-    politicalNarrative=`Ad blocker adoption in the United States correlates positively with education level, urban residence, and — in commercial voter file models — center-left to left political orientation. The correlation is not causal; it reflects the overlap between demographics that adopt privacy tools and demographics that lean toward tech regulation and corporate accountability. You appear in that segment.`;
-  } else {
-    politicalNarrative=`Your device, location, and behavioral profile have been assigned to political targeting segments without your knowledge or consent. Commercial voter files — sold by data brokers to campaigns of all parties — incorporate device type, browsing patterns, connection quality, and demographic inferences to model political affiliation, persuadability, and turnout likelihood. There is no opt-out mechanism for these models, and no legal requirement that they be accurate.`;
-  }
-
-  // ── REFERRER ──
-  let refNarrative='';
-  if(!S.ref) refNarrative=`You arrived here without a referrer — direct navigation, an encrypted messaging app, or a source that strips tracking parameters. Given the subject matter, that is either coincidence or habit.`;
-  else if(refHost.includes('google')) refNarrative=`You arrived from a Google search. The exact query, the time, your IP, and a persistent identifier tied to your search history were logged regardless of account status. Search intent is the most commercially sensitive behavioral signal available — more predictive of purchase behavior than any other input — and it is retained and acted upon indefinitely.`;
-  else if(refHost.includes('linkedin')) refNarrative=`You arrived from LinkedIn, which holds your professional history in precise detail. It has now recorded that someone with your professional profile clicked through to content about commercial surveillance — an interest signal that updates your behavioral model and will influence what content and advertising you are served going forward.`;
-  else if(refHost.includes('facebook')) refNarrative=`You arrived from Facebook. The click was logged, attributed to your profile, and used to update the behavioral model the company maintains on you. That model informs targeting decisions across every platform that runs Meta's advertising infrastructure — which includes most of the commercial web.`;
-  else refNarrative=`You arrived from ${refHost}. The referral domain is a data point about your information diet, your community affiliations, and the people whose recommendations you follow. It has been logged and will be used.`;
-
-  return {locationProfile, sesNarrative, professionNarrative, fingerprintNarrative, networkNarrative, behaviorNarrative, politicalNarrative, refNarrative, city, refHost, isEUtz, isUStz, isSouthernUS, localIP};
+function buildProfile() {
+  const p=inferProfile(engineInput());
+  // Still used by renderCases() (Part Three); not shown in the profile. See inference-map.md Part 1, "Also affected".
+  const tz=S.tz;
+  p.isEUtz=tz.startsWith('Europe/'); p.isUStz=tz.startsWith('America/');
+  p.isSouthernUS=['Chicago','Dallas','Austin','Houston','Nashville','Atlanta','Phoenix'].some(c=>tz.includes(c));
+  return p;
 }
 
 function renderProfile(p) {
+  const live=inferLive(B);
   document.getElementById('profileText').innerHTML=
-    `<p>${p.locationProfile}</p>
-     <p>${p.sesNarrative}</p>
-     <p>${p.professionNarrative}</p>
-     <p>${p.fingerprintNarrative}</p>
-     <p>${p.networkNarrative}</p>
-     <p>${p.behaviorNarrative}</p>
-     <p>${p.politicalNarrative}</p>
-     <p>${p.refNarrative}</p>
-     <p>No form. No account. No interaction. Scroll down to see the raw data behind this profile.</p>`;
+    p.paragraphs.map(par=>`<p>${escHtml(par.text)}</p>`).join('')+
+    `<p id="profileLive"${live.text?'':' hidden'}>${escHtml(live.text)}</p>`+
+    `<p>No form. No account. No interaction. Scroll down to see the raw data behind this profile.</p>`;
 
   const conf=[
-    {label:'Location', val:S.tz.split('/').pop().replace(/_/g,' ')||'Unknown'},
+    {label:'Time zone', val:p.zoneName||'Unknown'},
     {label:'Device', val:S.isMobile?'Mobile':'Desktop — '+(S.isLinux?'Linux':S.isMac?'Mac':S.isWin?'Windows':'Other')},
-    {label:'Fingerprint', val:S.canvas!=='blocked'?'Captured':'Blocked'},
+    {label:'Fingerprint', val:S.canvas==='blocked'?'Blocked':(S.canvasStable===false?'Randomized':'Captured')},
     {label:'Ad blocker', val:S.adblock?'Active':'Not detected'},
-    {label:'Local IP', val:p.localIP||'Not leaked'},
     {label:'Fonts found', val:S.fonts?(S.fonts.length+' installed'):'—'},
   ];
   document.getElementById('confRow').innerHTML=conf.map(c=>
     `<div class="conf-item"><strong>${c.val}</strong><span>${c.label}</span></div>`
   ).join('');
+
+  if(!profileShown){
+    profileShown=true;
+    setInterval(()=>{ // live attention statements (T1-27)
+      const el=document.getElementById('profileLive'); if(!el) return;
+      const l=inferLive(B); el.textContent=l.text; el.hidden=!l.text;
+    },3000);
+  }
 }
+
+// Re-run once the extended signals (X) finish collecting.
+function refreshProfile(){ if(profileShown) renderProfile(buildProfile()); }
 
 // ── UNIFIED SIGNAL TABLE ──
 function renderSignalTable() {

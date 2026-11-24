@@ -1,0 +1,208 @@
+{
+  "_note": "Made-up test visitors. Each persona is deep-merged over 'base'. Values mirror the page's S (sync signals), X (extended signals), B (behavior) and cookies objects. Run: node tests/run-personas.js",
+  "base": {
+    "S": {
+      "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36",
+      "lang": "en-US", "langs": ["en-US", "en"], "tz": "America/New_York",
+      "cores": 8, "ram": 8, "pxr": 1, "sw": 1920, "sh": 1080, "vw": 1400, "vh": 880,
+      "isMobile": false, "isMac": false, "isWin": true, "isLinux": false, "isIOS": false, "isAndroid": false,
+      "dnt": null, "conn": { "type": "4g", "downlink": 10, "rtt": 50, "save": false },
+      "ref": "", "histLen": 1, "fonts": [], "reducedMotion": false,
+      "canvas": "a3f9c21e0b1d2c", "canvasStable": true, "audio": "35.73833834", "adblock": false
+    },
+    "X": {
+      "ready": true, "clientHints": null, "webgl": { "unmaskedRenderer": "" }, "webgpu": null,
+      "locale": { "locale": "en-US", "hourCycle": "h12" },
+      "mediaPrefs": { "forcedColors": false, "contrast": "no-preference", "invertedColors": false, "colorGamut": "srgb", "dynamicRange": "standard" },
+      "screen": { "isExtended": false }, "fontsExtended": { "found": [] }, "voicesList": [],
+      "tracker": { "gaScriptLoaded": true }, "audioCheck": { "stable": true, "read2": "35.73833834" },
+      "webdriver": false, "keyboardLayout": null, "gpc": null
+    },
+    "B": { "visitTime": { "hour": 14, "minute": 10, "dayOfWeek": 2 }, "copies": [], "tab": { "hiddenCount": 0, "awayMs": 0 }, "sectionsMs": {} },
+    "cookies": { "vis": 1, "ga": null }
+  },
+  "personas": [
+    {
+      "id": "p01", "name": "MacBook Pro M3 Max, Creative Cloud fonts, Eastern, weekday afternoon, from Google",
+      "targets": ["T1-04", "T1-17", "T2-A"],
+      "data": {
+        "S": { "isWin": false, "isMac": true, "pxr": 2, "sw": 1728, "sh": 1117, "vw": 1512, "vh": 860, "fonts": ["Futura", "Avenir", "Gill Sans", "Myriad Pro", "Minion Pro"], "ref": "https://www.google.com/" },
+        "X": { "webgl": { "unmaskedRenderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M3 Max, Unspecified Version)" },
+               "mediaPrefs": { "colorGamut": "p3", "dynamicRange": "high" }, "fontsExtended": { "found": ["Acumin Pro", "Adobe Caslon Pro", "Avenir Next"] } }
+      }
+    },
+    {
+      "id": "p02", "name": "Windows 11 gaming PC, RTX 4080, HDR monitor, Creative Cloud, Central, Saturday night",
+      "targets": ["T1-03", "T1-05", "T1-17", "T2-A"],
+      "data": {
+        "S": { "tz": "America/Chicago", "fonts": ["Calibri", "Segoe UI", "Franklin Gothic Medium"] },
+        "X": { "clientHints": { "platformVersion": "15.0.0" },
+               "webgl": { "unmaskedRenderer": "ANGLE (NVIDIA, NVIDIA GeForce RTX 4080 (0x00002704) Direct3D11 vs_5_0 ps_5_0, D3D11)" },
+               "mediaPrefs": { "colorGamut": "p3", "dynamicRange": "high" }, "fontsExtended": { "found": ["Trajan Pro", "Bahnschrift"] } },
+        "B": { "visitTime": { "hour": 21, "minute": 40, "dayOfWeek": 6 } }
+      }
+    },
+    {
+      "id": "p03", "name": "Budget Samsung (international model), 2 GB, data saver, Spanish (Mexico), Central, 11 PM",
+      "targets": ["T1-01", "T1-07", "T1-08", "T1-11", "T1-12", "T2-B", "T2-D"],
+      "data": {
+        "S": { "ua": "Mozilla/5.0 (Linux; Android 14; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Mobile Safari/537.36",
+               "isWin": false, "isAndroid": true, "isMobile": true, "ram": 2, "cores": 8, "pxr": 2.6, "sw": 412, "sh": 915, "vw": 412, "vh": 780,
+               "lang": "es-MX", "langs": ["es-MX", "es", "en-US", "en"], "tz": "America/Chicago", "conn": { "type": "4g", "downlink": 2.1, "rtt": 150, "save": true } },
+        "X": { "clientHints": { "model": "SM-A155F", "platformVersion": "14.0.0" }, "locale": { "locale": "es-MX", "hourCycle": "h23" } },
+        "B": { "visitTime": { "hour": 23, "minute": 5, "dayOfWeek": 3 } }
+      }
+    },
+    {
+      "id": "p04", "name": "Windows 10 laptop, Spanish (US) first, Spanish keyboard, Spanish voice pack, Pacific",
+      "targets": ["T1-06", "T1-11", "T1-13", "T1-30", "T2-C"],
+      "data": {
+        "S": { "lang": "es-US", "langs": ["es-US", "es", "en"], "tz": "America/Los_Angeles" },
+        "X": { "clientHints": { "platformVersion": "10.0.0" }, "locale": { "locale": "es-US", "hourCycle": "h12" },
+               "voicesList": [ { "name": "Microsoft David", "lang": "en-US", "local": true }, { "name": "Microsoft Sabina", "lang": "es-MX", "local": true }, { "name": "Google español", "lang": "es-ES", "local": false } ],
+               "keyboardLayout": { "KeyQ": "q", "KeyY": "y", "KeyA": "a", "Semicolon": "ñ" } }
+      }
+    },
+    {
+      "id": "p05", "name": "Tor Browser: UTC, en-US, letterboxed window, randomized canvas, analytics blocked",
+      "targets": ["T1-20", "T1-21", "T1-22", "T2-F"],
+      "data": {
+        "S": { "tz": "UTC", "langs": ["en-US", "en"], "vw": 1000, "vh": 900, "canvasStable": false, "isWin": false, "isLinux": true,
+               "ua": "Mozilla/5.0 (Windows NT 10.0; rv:128.0) Gecko/20100101 Firefox/128.0", "conn": null },
+        "X": { "tracker": { "gaScriptLoaded": false }, "audioCheck": { "stable": false, "read2": "35.73833901" } },
+        "B": { "visitTime": { "hour": 14, "minute": 10, "dayOfWeek": 2 } }
+      }
+    },
+    {
+      "id": "p06", "name": "Brave on a Mac: randomized canvas and audio, analytics blocked, ad blocker, GPC",
+      "targets": ["T1-20", "T1-21", "T1-23", "T2-F"],
+      "data": {
+        "S": { "isWin": false, "isMac": true, "pxr": 2, "canvasStable": false, "adblock": true, "tz": "America/Denver" },
+        "X": { "tracker": { "gaScriptLoaded": false }, "audioCheck": { "stable": false, "read2": "35.73833112" }, "gpc": true }
+      }
+    },
+    {
+      "id": "p07", "name": "Chrome on Linux in Berlin: German, QWERTZ keyboard, programming fonts",
+      "targets": ["T1-18", "T1-11", "T1-30", "T1-10"],
+      "data": {
+        "S": { "isWin": false, "isLinux": true, "tz": "Europe/Berlin", "lang": "de-DE", "langs": ["de-DE", "de"], "fonts": ["Fira Code", "JetBrains Mono", "DejaVu Sans", "Ubuntu"] },
+        "X": { "locale": { "locale": "de-DE", "hourCycle": "h23" }, "fontsExtended": { "found": ["Noto Sans", "Hack", "Inconsolata"] },
+               "keyboardLayout": { "KeyQ": "q", "KeyY": "z", "KeyA": "a", "Semicolon": "ö" },
+               "webgl": { "unmaskedRenderer": "AMD Radeon RX 6700 XT (radeonsi, navi22, LLVM 17.0.6, DRM 3.54, 6.5.0)" } }
+      }
+    },
+    {
+      "id": "p08", "name": "Office worker: Windows 11, two monitors, weekday 10 AM, from LinkedIn",
+      "targets": ["T1-09", "T1-15", "T1-29"],
+      "data": {
+        "S": { "fonts": ["Calibri", "Cambria", "Segoe UI", "Gill Sans", "Franklin Gothic Medium"], "ref": "https://www.linkedin.com/" },
+        "X": { "clientHints": { "platformVersion": "15.0.0" }, "screen": { "isExtended": true },
+               "webgl": { "unmaskedRenderer": "ANGLE (Intel, Intel(R) UHD Graphics 620 (0x00005917) Direct3D11 vs_5_0 ps_5_0, D3D11)" } },
+        "B": { "visitTime": { "hour": 10, "minute": 25, "dayOfWeek": 1 } }
+      }
+    },
+    {
+      "id": "p09", "name": "Windows high-contrast mode (forced colours) and increased contrast",
+      "targets": ["T1-24", "T2-E"],
+      "data": {
+        "X": { "clientHints": { "platformVersion": "15.0.0" }, "mediaPrefs": { "forcedColors": true, "contrast": "more" } }
+      }
+    },
+    {
+      "id": "p10", "name": "Mac with OpenDyslexic installed and reduced motion",
+      "targets": ["T1-24", "T1-25", "T2-E"],
+      "data": {
+        "S": { "isWin": false, "isMac": true, "pxr": 2, "reducedMotion": true },
+        "X": { "fontsExtended": { "found": ["OpenDyslexic", "Avenir Next"] } }
+      }
+    },
+    {
+      "id": "p11", "name": "Returning iPhone visitor: 3rd visit, from Instagram, copied text, left the tab twice",
+      "targets": ["T1-02", "T1-26", "T1-28", "T1-29", "T1-27"],
+      "data": {
+        "S": { "ua": "Mozilla/5.0 (iPhone; CPU iPhone OS 18_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.1 Mobile/15E148 Safari/604.1",
+               "isWin": false, "isIOS": true, "isMobile": true, "pxr": 3, "sw": 393, "sh": 852, "vw": 393, "vh": 660, "ram": null,
+               "ref": "https://l.instagram.com/", "histLen": 7, "conn": null },
+        "X": { "webgl": { "unmaskedRenderer": "Apple GPU" } },
+        "B": { "copies": [ { "text": "Every item below was transmitted automatically. You authorized none of it.", "at": 41000 } ],
+               "tab": { "hiddenCount": 2, "awayMs": 95000 }, "sectionsMs": { "What your device broadcast the moment you arrived": 52000, "The surveillance that runs on every website you visit": 18000 } },
+        "cookies": { "vis": 3, "ga": "GA1.1.1849302771.1759500000" }
+      }
+    },
+    {
+      "id": "p12", "name": "Automated browser (headless Chrome, software renderer)",
+      "targets": ["T1-19"],
+      "data": {
+        "S": { "isWin": false, "isLinux": true, "ua": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/142.0.0.0 Safari/537.36" },
+        "X": { "webdriver": true, "webgl": { "unmaskedRenderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)" } }
+      }
+    },
+    {
+      "id": "p13", "name": "Windows 11 in the US Pacific zone, Chinese (China) first, Chinese voice pack",
+      "targets": ["T1-11", "T1-12", "T1-13", "T2-C"],
+      "data": {
+        "S": { "lang": "zh-CN", "langs": ["zh-CN", "zh", "en"], "tz": "America/Los_Angeles" },
+        "X": { "clientHints": { "platformVersion": "15.0.0" }, "locale": { "locale": "zh-CN", "hourCycle": "h23" },
+               "voicesList": [ { "name": "Microsoft Huihui", "lang": "zh-CN", "local": true }, { "name": "Microsoft Zira", "lang": "en-US", "local": true } ] }
+      }
+    },
+    {
+      "id": "p14", "name": "French-Canadian Mac in Toronto (language matches country)",
+      "targets": ["T1-11", "T1-10"],
+      "data": {
+        "S": { "isWin": false, "isMac": true, "pxr": 2, "tz": "America/Toronto", "lang": "fr-CA", "langs": ["fr-CA", "fr", "en-CA", "en"] },
+        "X": { "locale": { "locale": "fr-CA", "hourCycle": "h23" }, "webgl": { "unmaskedRenderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M2, Unspecified Version)" } }
+      }
+    },
+    {
+      "id": "p15", "name": "UK Samsung flagship (international model) in London",
+      "targets": ["T1-01", "T1-10"],
+      "data": {
+        "S": { "isWin": false, "isAndroid": true, "isMobile": true, "ram": 8, "sw": 384, "sh": 832, "vw": 384, "vh": 720, "pxr": 3.75,
+               "tz": "Europe/London", "lang": "en-GB", "langs": ["en-GB", "en"] },
+        "X": { "clientHints": { "model": "SM-S921B", "platformVersion": "15.0.0" }, "locale": { "locale": "en-GB", "hourCycle": "h23" },
+               "mediaPrefs": { "colorGamut": "p3", "dynamicRange": "high" } }
+      }
+    },
+    {
+      "id": "p16", "name": "US Galaxy S24 Ultra (carrier model), HDR screen, Sunday, from Facebook",
+      "targets": ["T1-01", "T1-05", "T1-29"],
+      "data": {
+        "S": { "isWin": false, "isAndroid": true, "isMobile": true, "ram": 8, "sw": 384, "sh": 832, "vw": 384, "vh": 720, "pxr": 3.75, "ref": "https://l.facebook.com/" },
+        "X": { "clientHints": { "model": "SM-S928U", "platformVersion": "15.0.0" }, "mediaPrefs": { "colorGamut": "p3", "dynamicRange": "high" } },
+        "B": { "visitTime": { "hour": 15, "minute": 30, "dayOfWeek": 0 } }
+      }
+    },
+    {
+      "id": "p17", "name": "Do Not Track plus an ad blocker, nothing else hidden",
+      "targets": ["T1-20", "T1-23", "T2-F"],
+      "data": {
+        "S": { "dnt": "1", "adblock": true }
+      }
+    },
+    {
+      "id": "p18", "name": "Late night, low-memory Android without data saver",
+      "targets": ["T1-07", "T1-16"],
+      "data": {
+        "S": { "isWin": false, "isAndroid": true, "isMobile": true, "ram": 2, "sw": 360, "sh": 800, "vw": 360, "vh": 680, "pxr": 2, "tz": "America/Chicago" },
+        "X": { "clientHints": { "model": "moto g play - 2024", "platformVersion": "14.0.0" } },
+        "B": { "visitTime": { "hour": 2, "minute": 14, "dayOfWeek": 4 } }
+      }
+    },
+    {
+      "id": "p19", "name": "Plain default: Windows 11, English, Eastern, no extras",
+      "targets": ["T1-10", "T1-15", "T1-21", "T1-29"],
+      "data": {
+        "X": { "clientHints": { "platformVersion": "15.0.0" } }
+      }
+    },
+    {
+      "id": "p20", "name": "SYNTHETIC conflict: spoofed signals that are both premium and low-budget",
+      "targets": ["T2-A", "T2-B", "conflict"],
+      "data": {
+        "S": { "isWin": false, "isAndroid": true, "isMobile": true, "ram": 2, "conn": { "type": "4g", "downlink": 1.5, "rtt": 200, "save": true } },
+        "X": { "clientHints": { "model": "SM-A055U" }, "mediaPrefs": { "colorGamut": "p3", "dynamicRange": "high" }, "fontsExtended": { "found": ["Acumin Pro"] } }
+      }
+    }
+  ]
+}

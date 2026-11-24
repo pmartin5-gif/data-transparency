@@ -126,3 +126,137 @@ A record of each instruction exchange. Newest entries at the bottom.
 - `PRODUCT.md`: added the GA synopsis and the sidebar item under "Showing it with impact"
 
 **Verdict:** Fulfilled. ("Yes thank you")
+
+---
+
+## 006 · Cookie summary in PRODUCT.md
+**Date:** 2026-11-24
+
+**Context:** The user asked (as a question) what cookies can reveal and whether it can be reflected back. My answer: cookies are memory, not sensing; the page can read only its own cookies (including GA's `_ga`); they're valuable for history across visits, shown back on the same browser. I also noted the Part Two "four cookies" claim is wrong (GA adds at least two).
+
+**Instruction:** "Add a summary to product.md."
+
+**Interpretations:**
+1. A one-to-two line summary under "What we can learn", matching the GA synopsis style. Excluded: the full table, the page observations, code changes. Asked: should the "four cookies" error go in as a separate fix-later item?
+   - *Confirmed*, and yes, add the fix-later item.
+
+**Confirmed intent:** Interpretation 1, plus a separate fix-later item for the cookie count.
+
+**Executed:**
+- `PRODUCT.md`: cookie summary under "What we can learn"; fix-later item for the "four cookies" claim under "Tone" (the section about the site's wording)
+
+**Verdict:** Fulfilled. ("Yes thank you.")
+
+---
+
+## 007 · Simulated tracking pixels in PRODUCT.md
+**Date:** 2026-11-24
+
+**Context:** The user asked (as a question) what data pixels collect and whether it can be reflected back. My answer: pixels link visits to real platform accounts; that linkage stays on the platform's side; only what's sent (`_fbp`, `_fbc`, request payloads) is visible, and only if a real pixel is installed. I also found the Part Two "Meta Pixel" panel shows simulated data as real.
+
+**Instruction:** Add this to `PRODUCT.md` with notes: show users what different pixels collect and send, without connecting real pixels to the site, via a clearly labeled simulation.
+
+**Interpretations:**
+1. Three additions split across sections: a pixel summary under "What we can learn," the simulation direction under "Showing it with impact," and a fix-later item for the Meta panel. Asked: should the simulation use the visitor's real data?
+   - *Correction:* undecided on real data, so note it as open. Also note that conveying account linkage is a goal, with the method undecided. **Don't split across sections; keep features grouped together.**
+2. One grouped item under "Showing it with impact" holding the description, the no-real-pixels and labeling constraints, two open questions (how to convey account linkage; real vs. generic data), the sidebar link, and the Meta panel fix. Plus a Learnings entry on grouping.
+   - *Confirmed.*
+
+**Confirmed intent:** Interpretation 2.
+
+**Executed:**
+- `PRODUCT.md`: "Simulated tracking pixels" grouped item under "Showing it with impact"
+- `CLAUDE.md`: Learnings entry, keep a feature's notes grouped together
+
+**Verdict:** Fulfilled. ("It did.") Earlier ungrouped items (cookie summary and its fix-later note; GA synopsis and sidebar) are to be left as they are; the grouping rule applies going forward.
+
+---
+
+## 008 · Inference map: engine review and rule design
+**Date:** 2026-11-24
+
+**Instruction:** Review the data collection components and devise what can be inferred from combinations, especially demographics (ethnicity, gender, sexuality), socioeconomic status and background vulnerabilities. Above all truthful; where it's a guess or likelihood, be clear. Impact comes from accurate reflection, not alarming language. Also suggest ways to test combinations.
+
+**Interpretations:**
+1. `inference-map.md` with a fixed confidence scale and sources; "can't infer" stated openly (e.g. gender/sexuality, with how platforms would infer it); 20 test profiles; no code. Flagged that the existing engine fails the standard (time zone as city, Mac/design-font misfire, unsourced claims). Asked: approach for unanswerable categories, review existing engine, sourcing. Offered six testing methods.
+   - *Correction:* review the existing engine (keep/correct/cut). **Say nothing where nothing can be inferred**; the exception is conspicuous absence from VPN/privacy tools. Display likely as statements, sources at the bottom; confidence not shown per claim. Start with 20 profiles.
+2. Engine review + rules (internal confidence/sources) + 20 profiles with hand-worked output.
+   - *Correction:* second thoughts on profiles. The user distinguished piecemeal rules (1–2 signals → a sentence) from matching all data to a profile, and wanted links to real-world statistics. I clarified that the "profiles" were test visitors, gave the trade-offs, recommended piecemeal rules + an assembly step, proposed "statements about how data is used, not who the person is," and flagged that time zone ≠ city.
+3. Modular rule catalog + real-world facts + assembly notes; test visitors deferred.
+   - *Correction:* add threshold conclusions for bolder claims. **No "how data is used" statements**: Part Three covers that; this section reflects back to the user only, and bolder is more powerful. Disregard the DC/Minneapolis examples.
+4. Engine review; Tier 1 rules about the person; Tier 2 threshold conclusions counting independent evidence only; assembly notes; tests deferred.
+   - *User asked a question:* how to reduce research. Answer: no new web research, `[STAT]` placeholders, source status per claim, provisional confidence, a smaller first set; plus a `PRODUCT.md` line for a later research step.
+   - *Confirmed.*
+
+**Confirmed intent:** Interpretation 4 with the reduced-research approach.
+
+**Executed:**
+- Created `inference-map.md`:
+  - Part 1: 8 cross-cutting problems + claim-by-claim keep/correct/cut table (49 claims: 30 cut, 17 correct, 2 keep). Found factual errors: Texas privacy law claim, P3 "almost exclusively Apple," "connection type identifies ISP," 10.x = corporate
+  - Part 2: 29 Tier 1 rules in 8 evidence groups
+  - Part 3: 6 Tier 2 conclusions (income, tight budget, language community/ethnicity, device from abroad, disability, actively hiding)
+  - Parts 4–5: assembly notes; signal gaps (IP location, keyboard layout, GPC)
+  - No gender/sexuality rules (no supporting signal)
+- `PRODUCT.md`: grouped "Inference engine" item under "What we can learn", with the research step and test visitors as later items
+- No web research; no code changes
+
+**Verdict:** Fulfilled. ("Yes, thank you.")
+
+---
+
+## 009 · Apply the engine review to `buildProfile()`
+**Date:** 2026-11-24
+
+**Instruction:** "Please go ahead and implement the adjustments you'd make to the existing engine."
+
+**Interpretations:**
+1. Apply `inference-map.md` Part 1 to `index.html`: remove cut claims; rewrite corrected ones with the map's replacement wording, limited to replacing existing claims; no `[STAT]` clauses; kept claims stay; `renderProfile()` skips empty sections. Excluded: new Tier 1 rules, Tier 2, case scoring, styling. Asked: (1) fix the summary row too (city from time zone, "Local IP")? (2) remove the UK GDPR line from the profile and note it in `PRODUCT.md`, or leave it?
+   - *Answers:* (1) make the corrections needed for accuracy; (2) remove it from the profile. *Confirmed.*
+
+**Confirmed intent:** Interpretation 1, with the summary row corrected and the GDPR line removed.
+
+**Executed:**
+- `index.html`: rewrote `buildProfile()` / `renderProfile()`; added helpers `profileZoneName()` and `profileLanguageNames()`
+  - Location → time-zone name (e.g. "Central Time") + languages in order of preference
+  - Data plan → Save-Data statement only
+  - Software → programming fonts (Fira Code, JetBrains Mono) and fonts "distributed with Adobe software" (deliberately not claiming a Creative Cloud subscription, since Reader may install some of them)
+  - Fingerprint → blocked / randomized / captured (with token), plus what the ad blocker did not stop
+  - Time → observed device type and local time
+  - Referrer → observed
+  - Network and political sections removed entirely (everything in them was cut)
+  - Summary row: "Location" → "Time zone" (zone name); Fingerprint shows "Randomized" when reads differ; Local IP removed
+  - Still computes `isUStz` / `isSouthernUS` / `isEUtz` for `renderCases()` (unchanged; flagged in the map)
+- `inference-map.md`: Part 1 marked implemented
+- Syntax check, plus the engine run on two sample visitors to check wording; fixed two grammar issues it showed
+- Not noted in `PRODUCT.md`: the GDPR line (removed only, per the answer)
+
+**Verdict:** Fulfilled. ("Yes")
+
+---
+
+## 010 · Build the full engine and run the test visitors
+**Date:** 2026-11-24
+
+**Instruction:** "I'd like to run tests using the profiles approach you suggested." Then: "Go ahead and implement all of your suggestions in the inference-map and what we've discussed already in index.html. Then we can run the test profiles against working code."
+
+**Interpretations:**
+1. 20 test visitors (`tests/personas.json`), a Node runner extracting the engine from `index.html`, results in `tests/results.md`; no `index.html` changes. Asked: test only the current (Part 1) engine, or also hand-work Tier 1/2?
+   - *Redirect:* build everything in the map into `index.html` first, then test against working code.
+2. Engine as a pure function separate from rendering; all 29 Tier 1 rules, 6 Tier 2 conclusions, assembly (absorb, one per topic, conflict, weak cap ≤2, ordering); profile renders immediately, re-renders when `X` is ready, live statements refresh; collect keyboard layout + GPC; summary row and bar unchanged. Defaults: omit `[STAT]` clauses (qualitative wording where confident); lookup-table rules show only the observed part; sensitive conclusions as drafted. Then personas/runner/results. Excluded: sidebar, pixels, tone pass, cookie-count fix, sources, case scoring.
+   - *Confirmed.*
+
+**Confirmed intent:** Interpretation 2.
+
+**Executed:**
+- `index.html`:
+  - New inference engine (`inferProfile`, `inferLive` + helpers) between `INFERENCE ENGINE START/END` markers. Pure: reads only its argument
+  - Page glue: `buildProfile` / `renderProfile` / `refreshProfile`; statements escaped on render; live paragraph updated every 3 s
+  - Collection: `xKeyboardLayout()` and `X.gpc`; `collectExtended()` calls `refreshProfile()` when done
+- `tests/personas.json` (20 visitors, base + overrides), `tests/run-personas.js`, `tests/results.md`
+- First run: all targets hit except p20's conflict (runner counted suppressed conclusions as missing; fixed the runner). Reading the output found wording bugs, all fixed: "a NVIDIA" / "a Intel(R)", driver details in GPU names, singular/plural fonts, Reader fonts listed as Creative Cloud, double punctuation after copied text, straight vs. curly apostrophes
+- Final run: all targets hit; T1-14 never fires (explained in the map)
+- `inference-map.md`: "Implementation notes" section listing deviations from the draft
+- `PRODUCT.md`: test visitors item updated
+- Not tested in a real browser
+
+**Verdict:** _pending_
