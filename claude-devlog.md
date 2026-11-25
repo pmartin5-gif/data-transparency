@@ -672,3 +672,22 @@ A record of each instruction exchange. Newest entries at the bottom.
 - Not changed: tests, `research-plan.md`, `PRODUCT.md`
 
 **Verdict:** Fulfilled. ("Yes")
+
+---
+
+## 029 · Research step complete; Next up updated
+**Date:** 2026-11-25
+
+**Instruction:** Consider the research step complete.
+
+**Interpretations:**
+1. `CLAUDE.md` "Next up": mark research ✓ (devlogs 020–028) and list next: test visitors, ZIP datasets and GPC list, the user's review list, IP reflection on the page; `research-plan.md` status line "Complete".
+   - *Correction:* bundle the ZIP datasets and state GPC list next (before the test visitors). *Confirmed* otherwise.
+
+**Confirmed intent:** Interpretation 1 with datasets first.
+
+**Executed:**
+- `CLAUDE.md`: step 3 marked done; new "Next, in order" list: (1) ZIP datasets + GPC list, (2) test visitors, (3) review list, (4) IP reflection on the page
+- `research-plan.md`: status line "Complete (devlogs 020–028)"
+
+**Verdict:** Fulfilled. ("Yes")

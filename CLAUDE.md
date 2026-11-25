@@ -21,9 +21,13 @@ Start here when resuming. First read `PRODUCT.md`, `inference-map.md` (incl. "Im
    - ✓ **Collected** (devlog 015): via country.is into recorder `N`, page memory only. Service choice, the later switch to a host server function, and the VPN-detection gap are in `PRODUCT.md` → "IP address". Footer's "processing is local" line removed.
    - **Still to do:** reflect it back on the page. Region and continent arrive as codes ("NY", "NA").
 2. ✓ **Feed it into the inference engine** (devlogs 017–018): IP rules T1-31 to T1-34, new Tier 2 conclusions T2-G to T2-I; others marked Planned in `inference-map.md`.
-3. **Deep research step.** Plan in `research-plan.md` (devlog 019): discovery first (what new inferences the data supports), checking existing rules second.
+3. ✓ **Deep research step** (devlogs 019–028): Passes A–D and a source check in `research-plan.md` §9; folded into `inference-map.md`; reliable, buildable items built into `index.html`.
 
-Also pending, **after the research step:** update the test visitors (p05/p06 after the GA removal, and add IP data to them), then run them.
+**Next, in order (set 2026-11-25):**
+1. **Bundle the ZIP datasets and the state GPC list** (`inference-map.md` Part 5): Census ACS or IRS income by ZIP, and the states that require honoring Global Privacy Control. Unlocks the income band (T2-A), Google Ads tier (M-03), provider deals (B-01), location pricing (A-04), the GPC sentence (T1-23), and the remaining parts of T2-L and T2-M.
+2. **Update and run the test visitors:** p05/p06 after the GA removal, add IP data, add visitors for the new rules (devlog 028).
+3. **User's review list:** `PRODUCT.md` → "Review before building" (decisions and missing sources).
+4. **Still to do from step 1:** reflect IP data back on the page (region and continent arrive as codes).
 
 ## Project rules
 

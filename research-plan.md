@@ -1,6 +1,6 @@
 # Research Plan
 
-The plan for "Next up" step 3 (`CLAUDE.md`). Set up in devlog 019. Passes A–D done (devlogs 020, 022–024); sources checked (devlog 025); findings await review.
+The plan for "Next up" step 3 (`CLAUDE.md`). Set up in devlog 019. **Complete (devlogs 020–028).** Passes A–D, source check, folded into `inference-map.md` and built into `index.html`.
 
 ---
 
