@@ -608,3 +608,67 @@ A record of each instruction exchange. Newest entries at the bottom.
 - Not changed: `inference-map.md`, `index.html`, tests
 
 **Verdict:** Fulfilled. ("Yes")
+
+---
+
+## 026 · Inference map: research folded in
+**Date:** 2026-11-25
+
+**Instruction:** Update `inference-map.md` based on what the research found.
+
+**Interpretations:**
+1. Only `inference-map.md`, nothing built: update existing rules' sources, `[STAT]`s and confidence; add guards (teen iPhone, fiber, Android, location precision); add new rules and conclusions as Planned (C-01 to C-10, M-10, R-xx, targeting sentences, new network types); mark user calls with ⚑ Needs decision and unverified sources with ✗ source needed; update status, dropped list and data needs. Asked: every candidate or only the strongest? Targeting sentences inside each rule or in a separate part?
+   - *Answers:* completionist, everything in one pass. Asked for examples of targeting statements; after examples, inside each rule.
+
+**Confirmed intent:** Interpretation 1, everything, targeting statements inside each rule.
+
+**Executed:**
+- `inference-map.md`:
+  - Status line, Standards (targeting/risk statements, minors) and Keys (✓ checked, ~, ✗ source needed, ⚑ Needs decision)
+  - Part 1: battery row notes T1-37
+  - Tier 1: sources, figures, guards and **Targeting** lines on T1-01/02/06/07/08/11/16/20/22/23/24/25/27/29/31/32/33/34; T1-14 removed; new Planned T1-35 Android, T1-36 Mac, T1-37 Low battery
+  - Tier 2: research blocks on T2-A to T2-J; new Planned T2-K night shift at the hospital, T2-L pricing, T2-M ad profile, T2-N servicemember under strain, T2-O narrowed to a few people; R-04 recorded as a needs-decision note; research dropped list
+  - Assembly notes 10–11; implementation note; Part 5 data needs
+- Not changed: `index.html`, tests, `research-plan.md`
+
+**Verdict:** Fulfilled. ("Yes")
+
+---
+
+## 027 · Review list in PRODUCT.md
+**Date:** 2026-11-25
+
+**Instruction:** Log in `PRODUCT.md` that the user will review the items that need a decision or sources; flag those, then move on.
+
+**Interpretations:**
+1. One `PRODUCT.md` item under "What we can learn" listing the ⚑ Needs decision, ✗ Source needed and US source needed items from `inference-map.md`; "flag" read as listing them there, since they're already marked in the map. Only `PRODUCT.md` changes.
+   - *Confirmed.*
+
+**Confirmed intent:** Interpretation 1.
+
+**Executed:**
+- `PRODUCT.md`: "Review before building" item with the three lists
+- Not changed: `inference-map.md`, `index.html`, tests
+
+**Verdict:** Fulfilled. ("Yes")
+
+---
+
+## 028 · Build pass: research into the engine
+**Date:** 2026-11-25
+
+**Instruction:** (After asking whether the engine had been updated: it hadn't.) Scope and do a build pass with what works with the page's current data, datasets in a separate step.
+
+**Interpretations:**
+1. Build into `index.html` all source-checked items that work with current data: new wording, figures, guards and targeting sentences on existing rules; new T1-36 Mac, T2-J (network path, no school districts), T2-L, T2-M, T2-O; remove T1-14; cap of two targeting sentences per rule. Leave out the review list, ZIP-income and GPC-list items, T1-35. Syntax check only; tests not edited or run; mark built in `inference-map.md`. Asked: optional sentences? Mac as an income signal (2009 figure)? T2-N narrowed or held?
+   - *Answers:* put in the optional sentences; skip Mac as an income signal (figure too old); hold T2-N.
+
+**Confirmed intent:** Interpretation 1 with optional sentences, no Mac income path, T2-N held.
+
+**Executed:**
+- `index.html` (engine only): T1-02 69% wording, advertiser sentence, teen guard; T1-06 "1 in 7"; T1-36 Mac; T1-31 state-level wording for unrecognized organizations, home-network risk sentence, ad-auction sentence; T1-32 Starlink rural, government, hospital, military sentences; T1-34 fraud flag; T1-14 removed; T1-16 impulse; T1-29 referrer age skew; T1-20 ad-blocker demographics; T1-22 NSA/Tails; T1-23 DNT; T1-27 (live) FTC and session-replay sentences; T2-A broker accuracy; T2-B segment names and payday ads; T2-C 93%, Facebook, scams; T2-G employer logs and sales software; T2-I travel pricing; new T2-J, T2-L, T2-M, T2-O
+- `inference-map.md`: statuses updated; implementation note listing what's built and nine differences from the design
+- Checks: engine and all inline scripts pass `node --check`. Tests not edited or run
+- Not changed: tests, `research-plan.md`, `PRODUCT.md`
+
+**Verdict:** Fulfilled. ("Yes")
