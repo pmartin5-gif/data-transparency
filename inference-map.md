@@ -9,6 +9,7 @@
 - Gender and sexuality are absent on purpose: no collected signal supports a truthful inference.
 - **Aim for "how did it know that?"** (devlog 018). A statement should reveal something hidden about *this person*. Common knowledge (e.g. sunset times) and facts about an area (e.g. a ZIP code's median income) don't produce that moment, so they are never statements on their own.
 - **Area data is an input, not a statement.** Census or industry figures for a ZIP code or county only feed conclusions about the person: income band, rent, home ownership, likely industry. Target boldness, from the user: "Based on your high-end hardware and the median income of your location, it's likely you make between X and Y per year. You pay X in rent per month and are Y% likely to own your home."
+- **Targeting statements belong in the profile** when they are truthful, considered and impactful (devlog 019; replaces Part 1, problem 8 for these). How advertisers, marketers or bad actors would characterize or target the visitor counts, even when their inference is unreliable. See `research-plan.md` §4.
 - **Network type and employer are high-value.** What kind of network someone is on (workplace, campus, hospital, library, prison) says a lot about who they are and where they are right now.
 
 **Keys**
@@ -30,7 +31,7 @@
 5. **`navigator.connection.downlink` is capped at 10 Mbps in Chrome,** so the `downlink>20` ("fiber") branch never fires. ✓ Network Information API / Chrome implementation
 6. **Camera and mic counts are limited before permission.** Before the visitor grants access, browsers report at most one device of each kind, so `cameras>1 && mics>1` almost never fires. ✓ W3C Media Capture spec
 7. **`canvas === 'blocked'` rarely happens.** Privacy browsers randomize canvas output rather than throwing errors. The real signal is `S.canvasStable === false` (added in 004).
-8. **Several narratives describe how data is used,** for example sales to insurers and law enforcement access. That belongs in Part Three, not in the reflection.
+8. **Several narratives describe how data is used,** for example sales to insurers and law enforcement access. That belongs in Part Three, not in the reflection. *(Revised in devlog 019: targeting statements that are truthful, considered and impactful now belong in the profile. Generic usage narratives still go to Part Three.)*
 
 ### Claim by claim
 

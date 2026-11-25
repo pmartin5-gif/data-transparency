@@ -462,3 +462,30 @@ A record of each instruction exchange. Newest entries at the bottom.
 - Not changed: tests (not edited or run). Syntax check only
 
 **Verdict:** Fulfilled. ("Yes")
+
+---
+
+## 019 · Research plan
+**Date:** 2026-11-25
+
+**Instruction:** Skip updating test visitors until after research; begin to prep for research.
+
+**Interpretations:**
+1. A `research-plan.md` gathering claims to source, `[STAT]`s, datasets, questions to settle (incl. the user's examples) and priorities; "Next up" updated. Asked: separate file or part of `inference-map.md`?
+   - *Answer:* new file `research-plan.md`. *Correction:* the user's examples are the *type* of inference wanted, not claims to verify. The research is mainly to discover what inferences the data supports, e.g. correlations found in sources; verification is secondary. Asked: research new data points too? count industry claims? include sensitive topics? geography?
+   - *Answers:* (1) yes, new data collectable with current systems if meaningful; (2) yes, present industry claims flagged as advertisers'/data brokers' perspective; (3) include sensitive topics, decide case by case; (4) US only.
+2. Plan organized around discovery: purpose, scope, where to look, evidence types and wording, data groups in priority order, findings log, secondary verification track, datasets, process.
+   - *Correction:* widen "where to look" to sociological studies, polling and marketers' own published material; reliability can be traded for a caveat ("according to marketers"); reflecting how advertisers, marketers or bad actors would infer and target the visitor is itself interesting. *Confirmed* otherwise.
+
+   - *Further corrections (after execution):* industry inferences are worth reporting even when unreliable; sometimes the unreliability is the point. Answer to the open question: targeting statements go in the profile when truthful, considered and impactful (example: not "advertisers know the sun is out"; yes "because you work in government you're three times more likely to receive lobbying ads"). Concern: researching by data group may miss cross-group inferences; asked for a more holistic approach.
+3. Amend the plan: accuracy not required for industry inferences, "based on nothing more than" wording, profile test for targeting statements, three passes (A: start from the person's attributes; B: signal sweep; C: combine into a grid), log fields for reliability and groups combined; note in `inference-map.md`.
+   - *Confirmed.*
+
+**Confirmed intent:** Interpretation 3 (2 plus the amendments).
+
+**Executed:**
+- `research-plan.md` (new): purpose (discovery first; three perspectives: research, advertisers/brokers, bad actors), scope (US, all groups, new data, sensitive topics in), where to look, evidence types → wording table, data groups in order, findings log format, secondary track (`?` sources, ✓ to check, `[STAT]`s, open questions), datasets to bundle, empty findings section, process. Open question noted: targeting statements vs. `inference-map.md` problem 8 (usage belongs in Part Three)
+- `CLAUDE.md` "Next up": step 2 marked done; step 3 points to `research-plan.md`; test-visitor update moved to after research
+- Amendments: `research-plan.md` §1 (accuracy not required for industry inferences), §4 (weak-basis wording; profile test for targeting statements with the user's examples), §5 replaced with Passes A/B/C, §6 (groups-combined and reliability fields), §10 (pass order; open question removed). `inference-map.md`: Standards bullet on targeting statements; Part 1 problem 8 revision note
+
+**Verdict:** Fulfilled. ("Yes")

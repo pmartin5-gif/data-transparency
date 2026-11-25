@@ -20,10 +20,10 @@ Start here when resuming. First read `PRODUCT.md`, `inference-map.md` (incl. "Im
 1. **IP address collection and reflection.**
    - ✓ **Collected** (devlog 015): via country.is into recorder `N`, page memory only. Service choice, the later switch to a host server function, and the VPN-detection gap are in `PRODUCT.md` → "IP address". Footer's "processing is local" line removed.
    - **Still to do:** reflect it back on the page. Region and continent arrive as codes ("NY", "NA").
-2. **Feed it into the inference engine.** New Tier 1 rules for IP data, and city-level location for rules currently limited to the time-zone region (see `inference-map.md` Part 1, problem 1). Can unlock bolder Tier 2 conclusions.
-3. **Deep research step.** Source every claim, fill the `[STAT]` placeholders, and build out more insightful inferences, including the "Increase impact" goal under Inference engine in `PRODUCT.md`.
+2. ✓ **Feed it into the inference engine** (devlogs 017–018): IP rules T1-31 to T1-34, new Tier 2 conclusions T2-G to T2-I; others marked Planned in `inference-map.md`.
+3. **Deep research step.** Plan in `research-plan.md` (devlog 019): discovery first (what new inferences the data supports), checking existing rules second.
 
-Also pending: test visitors p05/p06 need updating after the GA removal (don't run tests unless asked, see Learnings).
+Also pending, **after the research step:** update the test visitors (p05/p06 after the GA removal, and add IP data to them), then run them.
 
 ## Project rules
 
