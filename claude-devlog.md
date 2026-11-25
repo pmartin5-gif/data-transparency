@@ -489,3 +489,122 @@ A record of each instruction exchange. Newest entries at the bottom.
 - Amendments: `research-plan.md` §1 (accuracy not required for industry inferences), §4 (weak-basis wording; profile test for targeting statements with the user's examples), §5 replaced with Passes A/B/C, §6 (groups-combined and reliability fields), §10 (pass order; open question removed). `inference-map.md`: Standards bullet on targeting statements; Part 1 problem 8 revision note
 
 **Verdict:** Fulfilled. ("Yes")
+
+---
+
+## 020 · Research Pass A
+**Date:** 2026-11-25
+
+**Instruction:** Start Pass A (asked as "do you know what that means?").
+
+**Interpretations:**
+1. Research the six attribute areas, log findings in `research-plan.md` §9, check sources against the third-party rule, build nothing, no tests. Asked: all six areas at once or one at a time? Sub-agents?
+   - *Correction:* the third-party rule doesn't apply to reference sources (they receive no visitor data). Use any source; reliability decides the wording, not inclusion.
+2. As 1, using any source, plus §10 amended so the rule covers only services or new data points that receive visitor data.
+   - *Answers:* all six areas in one go, without losing depth; no sub-agents (speed isn't a concern, token cost is). *Confirmed.*
+
+**Confirmed intent:** Interpretation 2, done directly without sub-agents.
+
+**Executed:**
+- `research-plan.md` §10: third-party rule scoped to services or new data points that receive visitor data
+- `research-plan.md` §9: Pass A findings A-01 to A-42 (numbers A-21 and A-38 unused) across the six areas, a strongest-candidates list, areas with no supportable signal, and a list of figures to check in primary sources. Status line updated
+- Not changed: `index.html`, `inference-map.md`, tests
+
+**Verdict:** Fulfilled. ("Yes this is good. The types of inferences you uncovered are generally interesting.")
+
+---
+
+## 021 · Minors
+**Date:** 2026-11-25
+
+**Instruction:** Don't handle minors: no collecting or reflecting distinguishing information about people under 18. Note in `PRODUCT.md` that visitors should be told this was an option we chose not to take, and given information on what data might be collected about minors and how it's used.
+
+**Interpretations:**
+1. One short `PRODUCT.md` item (decision; show visitors the option declined and examples from Pass A). Nothing built. Asked: flag the school-district network type and the A-15 teen guard for review? Mark A-16 declined in `research-plan.md`?
+   - *Answers:* note right as written. Stating a school-district network is fine; flagging a likely teen only to withhold income readings is fine. Remove A-16 so it isn't proposed again. *Confirmed.*
+
+**Confirmed intent:** Interpretation 1, plus A-16 removed.
+
+**Executed:**
+- `PRODUCT.md`: "Minors" item under "What we can learn", including the two allowed cases
+- `research-plan.md`: A-16 replaced by a one-line "Declined, don't propose again" stub; removed from the strongest-candidates list and from A-18's cross-reference
+- Not changed: `index.html`, `inference-map.md`, tests
+
+**Verdict:** Fulfilled. ("yes")
+
+---
+
+## 022 · Research Pass B
+**Date:** 2026-11-25
+
+**Instruction:** Go ahead with Pass B.
+
+**Interpretations:**
+1. Sweep the eight data groups in §5 order (I, D, T, L/Z, W, P, A, H) for documented links, alone or across groups; log as B-01 onward in §9, cross-referencing Pass A rather than repeating; note predictive new data; same rules as Pass A (any source, nothing about minors, no sub-agents, all groups in one go). No changes to `index.html`, `inference-map.md` or tests.
+   - *Confirmed.*
+
+**Confirmed intent:** Interpretation 1.
+
+**Executed:**
+- `research-plan.md` §9: Pass B findings B-01 to B-27 (B-13 unused; battery points to A-40), with strongest candidates, guards on existing rules (fiber, Android), secondary-track sources, and a to-check list. Status line updated
+- Not changed: `index.html`, `inference-map.md`, tests
+
+**Verdict:** Fulfilled. ("yes")
+
+---
+
+## 023 · Research Pass C
+**Date:** 2026-11-25
+
+**Instruction:** Start Pass C.
+
+**Interpretations:**
+1. Build an attribute × evidence-group grid in §9 from Pass A, Pass B and existing rules; any attribute predicted by two or more independent groups becomes a candidate Tier 2 (C-01 onward) with groups, signals, draft wording, sources, confidence, guards, and new vs. extension; weak findings don't count; targeted searches where a combination lacks a source, otherwise recorded as a gap; nothing about minors; any source; no sub-agents. No changes to `index.html`, `inference-map.md` or tests.
+   - *Confirmed.*
+
+**Confirmed intent:** Interpretation 1.
+
+**Executed:**
+- `research-plan.md` §9: Pass C. Four targeted searches (broker income accuracy, nurses' night work, students and Macs, immigrants and phones bought abroad; the last found nothing); grid of 17 attributes × 8 groups; candidates C-01 to C-10 (new: C-03 pricing composite, C-05 night shift at the hospital, C-06 industry from network type; the rest extend T2-A/B/C/D/F/G/I); single-group and no-candidate lists; to-check list. Status line updated
+- Not changed: `index.html`, `inference-map.md`, tests
+
+**Verdict:** Fulfilled. ("yes")
+
+---
+
+## 024 · Research Pass D: advertiser view and risky combinations
+**Date:** 2026-11-25
+
+**Instruction:** Before moving on, another pass weighing research toward the advertiser/marketer perspective, and uncovering combinations of data or inferences that put someone at risk (fewer, but powerful).
+
+**Interpretations:**
+1. Pass D in §9. Part 1 (M-xx): how the ad industry would read a visitor from the page's signals (segments, categories, bid value, campaigns), leaning on industry sources (ad-platform audience categories, broker catalogs and marketplaces, ad-auction data and leaks, marketing case studies, trade press); accuracy not required. Part 2 (R-xx): combinations that expose someone to harm (re-identification, stalking or abuse, immigration, reproductive health, LGBTQ, scams, servicemembers), each with combination, who could exploit it, cases, how often it fires, draft wording; wording describes risk, not exploitation. Nothing about minors; weak findings don't count; no sub-agents; no changes to `index.html`, `inference-map.md` or tests.
+   - *Confirmed.*
+
+**Confirmed intent:** Interpretation 1.
+
+**Executed:**
+- `research-plan.md` §9: Pass D. Part 1: M-01 to M-07 plus composite M-10 "your ad profile" (M-08, M-09 unused; cross-references to Pass A). Part 2: R-01 to R-10 (R-04 reproductive health recorded as no person-level inference; sexuality, religion, politics recorded as impossible). Strongest list and to-check list. Status line updated
+- Not changed: `index.html`, `inference-map.md`, tests
+
+**Verdict:** Fulfilled. ("Yes")
+
+---
+
+## 025 · Source check
+**Date:** 2026-11-25
+
+**Instruction:** Check sources for all of the research first; the step after will be to update `inference-map.md`.
+
+**Interpretations:**
+1. For every finding in Passes A–D plus the to-check lists, compare the logged claim with the primary source; verdicts ✓ / ✎ (fixed in place) / ~ / ✗; summary added to §9; reliability changes flagged. Primary sources read via the web-fetch tool (a page reader, not a research sub-agent), which costs tokens. No changes to `inference-map.md`, `index.html` or tests. Asked: check "Candidate: none" items too?
+   - *Answer:* skip them. *Confirmed* otherwise.
+
+**Confirmed intent:** Interpretation 1, skipping "Candidate: none" items.
+
+**Executed:**
+- 12 page-reading batches plus direct checks: PDFs the reader couldn't parse (FTC 2014, Senate 2013, Berg et al., Hannak, Hupperich, Saxon & Feamster, W3C slides, Pew Trusts, Lotame, Appodeal, Eckersley) extracted locally and searched; OpenRTB 2.6 spec downloaded and read
+- `research-plan.md` §9: corrections applied in place (A-01/02/03/05/07/08/09/11/14/32/36/37/39, B-01/02/03/05/10/11/22/23/26, M-01/02/05/06, R-02/03/04/07/09, Pass C nurses figure withdrawn); new "Source check" section with verdict table, corrections that change wording, and a still-unverified list. Status line updated
+- Not changed: `inference-map.md`, `index.html`, tests
+
+**Verdict:** Fulfilled. ("Yes")
