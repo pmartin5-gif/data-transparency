@@ -14,6 +14,13 @@ Loose notes on where this could go.
 - Find more data we can collect from visitors
 - Find more inferences we can draw about the user from that data
 - **Next steps (agreed 2026-11-24):** (1) IP address collection and reflection, which needs an outside lookup service, so settle the third-party trade-off and the footer's "processing is local" claim first; (2) feed IP data into the inference engine, including city-level location; (3) the deep research step below. Also in `CLAUDE.md` → "Next up."
+- **IP address** (collected in devlog 015; recorder `N` in `index.html`, not displayed yet)
+  - Lookup via **country.is**: open source, states it keeps no request logs, not a data broker. Location data comes from MaxMind GeoLite2 (MaxMind *is* a registered broker, but lookups run on country.is's server, so visitor IPs never reach MaxMind). ipapi.co was rejected: it logs queried IPs and is a registered data broker.
+  - Returns IP, country, region, city, postal code, coordinates (with accuracy radius), time zone, network ID (ASN) and provider/organization name.
+  - **When the site is hosted publicly:** switch to option (c), a server function at the host (e.g. a Cloudflare Worker reading `request.cf`), so no extra third party sees visitor IPs. country.is is for development.
+  - **Not covered:** VPN, proxy, data-center and mobile-carrier detection. Free services don't offer it; paid ones are mostly data brokers. Possible substitute: an engine rule guessing from the provider name (AWS, known VPN companies, carriers).
+  - Footer's "All browser-based processing on this page is local" line removed, since the IP lookup is no longer local.
+  - **In the engine (devlog 017):** city/ZIP location, internet provider and type, VPN guess, clock vs. connection mismatch; now shown in the profile. Research step: extend the provider table, and consider ZIP-level Census data (e.g. median income) for bolder conclusions.
 - **Inference engine** (built in `index.html`; design in `inference-map.md`)
   - Piecemeal rules (1–3 signals → one statement) plus threshold conclusions for bolder claims, with a light assembly step.
   - Reflections about the visitor only; say nothing where nothing can be inferred (except conspicuous absence from privacy tools).

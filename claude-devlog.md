@@ -353,4 +353,82 @@ A record of each instruction exchange. Newest entries at the bottom.
 - `CLAUDE.md`: "Next up" section (orientation reading list, three ordered steps, decisions to settle, pending p05/p06 test update)
 - `PRODUCT.md`: "Next steps" line at the top of "What we can learn"
 
-**Verdict:** _pending_. The user is stepping away; ask at the start of the next session.
+**Verdict:** Fulfilled. ("Yes", given 2026-11-25)
+
+---
+
+## 015 · Collect the visitor's IP address (collection only)
+**Date:** 2026-11-25
+
+**Instruction:** Start "Next up" step 1. Collect IP addresses even though it means a third party; set up the collection infrastructure in the working version, with reflection later.
+
+**Interpretations:**
+1. New page-memory recorder for network data; one lookup on load; store IP, location, provider; nothing displayed, engine and tests untouched. Notes in `PRODUCT.md` (footer claim now untrue, VPN detection not covered) and `data-audit.md` §4. Asked: which service (recommended ipapi.co), and change the footer now or note it?
+   - *Answers:* remove the footer's "processing is local" line. Asked whether ipapi.co needs an account, and whether the IP could be processed on-site instead. (Answered: finding the IP always needs an outside party or our own server; interpreting it can be local with a downloadable database; options (a) ipapi.co, (b) STUN plus local database, (c) server function at the host.)
+2. Same, with the footer line removed and option (a).
+   - *Correction:* use (a) ipapi.co, but note in `PRODUCT.md` that we switch to (c) when the site is hosted publicly.
+3. Checked ipapi.co's terms; corrected my earlier claim (it's a ~100/day trial, not ~1,000/day, development only). It logs queried IPs and is a registered data broker.
+   - *Correction:* look at other free services first. Sending visitor data to a data broker is unethical for a site about data exposure.
+4. Researched 11 services against their own policies and the California data-broker registry. Recommended country.is (open source, no request logs, not a broker; data from MaxMind GeoLite2, looked up on its own server). No free service offers VPN/proxy/mobile detection.
+   - *Confirmed.*
+
+**Confirmed intent:** Interpretation 4: collection via country.is into a page-memory recorder, footer line removed, notes in `PRODUCT.md` and `data-audit.md`.
+
+**Executed:**
+- `index.html`:
+  - New recorder `N` (after the `X` collector): one `fetch` to `https://api.country.is/?fields=city,continent,subdivision,postal,location,asn` on load, no cookies or referrer sent, 8 s timeout
+  - Stores raw response plus ip, ipVersion, country, continent, region, city, postal, latitude, longitude, accuracyKm, timeZone, asn, org; `status` = ok / rate-limited / no-data / error / timeout / blocked
+  - Project-rule comment now names `N`
+  - Footer: "All browser-based processing on this page is local to your device" removed; remaining line's top margin dropped
+- `PRODUCT.md`: "IP address" item (service choice and why, switch to (c) when public, VPN detection gap, footer change)
+- `data-audit.md` §4: collected items marked ✓
+- Not changed: display, inference engine, tests. Syntax check only; the live call was not run
+
+**Follow-up (not an instruction, no files changed):** the user asked for a test. Ran the page's `collectNetwork()` in Node against the live service: status ok, all fields returned (subdivision, continent and postal are plain strings; region and continent are codes, e.g. "NY"). CORS confirmed (`access-control-allow-origin: *`). Not tested in a real browser with extensions.
+
+**Verdict:** Fulfilled. ("Yes")
+
+---
+
+## 016 · Bring hand-off notes up to date; third-party rule
+**Date:** 2026-11-25
+
+**Instruction:** Update the stale notes (`CLAUDE.md` "Next up", `inference-map.md` Part 5) and add the note about checking third parties against the project's purpose.
+
+**Interpretations:**
+1. Third-party guidance in `CLAUDE.md` (asked: Learnings or Project rules?); "Next up" step 1 marked collected, reflection still open; Part 5 gap updated; devlog entry.
+   - *Answer:* Project rules. *Confirmed* otherwise.
+
+**Confirmed intent:** Interpretation 1, with the guidance as a project rule.
+
+**Executed:**
+- `CLAUDE.md`: new project rule "Check outside services against the project's purpose"; "Next up" step 1 now shows collection done (devlog 015) and reflection still to do
+- `inference-map.md` Part 5: city-level location gap now says collected in `N`, not yet used by the engine
+
+**Verdict:** Fulfilled. ("Yes")
+
+---
+
+## 017 · Feed IP data into the inference engine
+**Date:** 2026-11-25
+
+**Instruction:** Move to "Next up" step 2.
+
+**Interpretations:**
+1. Design IP rules in `inference-map.md` (new evidence group I; city-level location replacing T1-10; internet provider with type; VPN/data-center guess feeding T2-F; clock and language mismatches against the connection), flag ZIP-level Census data for research, notes, no tests. Asked: design first or design and build together? Should built IP statements appear on the page now?
+   - *Answers:* design and build together; showing it on the page is fine for now. *Confirmed.*
+
+**Confirmed intent:** Interpretation 1, designed and built, shown in the profile.
+
+**Executed:**
+- `index.html` engine:
+  - New input `D.N`; provider table `ENG_PROVIDERS`, US state names, `engProvider`, `engOrgName`, `engUtcOffset`
+  - T1-31 location from IP (replaces T1-10 when it fires); T1-32 internet provider by type; T1-33 VPN/data center (group P, blocking, feeds T2-F); T1-34 clock vs. connection time zone
+  - T1-12 and `isUS` use the connection country when known (not when a VPN is detected)
+  - T2-F "still visible" list adds approximate location and provider
+- `index.html` glue: `engineInput()` passes `N`; profile re-renders when the lookup finishes
+- `inference-map.md`: group I, rules T1-31 to T1-34, T1-12 update, implementation note, Part 5 updated (ZIP demographics gap added)
+- `PRODUCT.md`: one line under "IP address"
+- Not changed: tests (not edited or run). Syntax check only
+
+**Verdict:** Fulfilled. ("Yes")

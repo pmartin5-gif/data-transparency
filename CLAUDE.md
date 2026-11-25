@@ -17,9 +17,9 @@ Prompts are either **questions** or **instructions**.
 
 Start here when resuming. First read `PRODUCT.md`, `inference-map.md` (incl. "Implementation notes") and the last few entries of `claude-devlog.md`. Then, in order:
 
-1. **IP address collection and reflection.** Get the visitor's IP address and what it reveals (city/region, internet provider or organization, VPN/proxy/data-center detection) and add a way to reflect it back on the page. Options are in `data-audit.md` §4.
-   - Settle first: this needs an **outside lookup service**, so each visitor's IP goes to a third party. That conflicts with the footer's "All browser-based processing on this page is local," and it was set aside earlier for that reason.
-   - Follow the single-session rule below: keep IP data in page memory only.
+1. **IP address collection and reflection.**
+   - ✓ **Collected** (devlog 015): via country.is into recorder `N`, page memory only. Service choice, the later switch to a host server function, and the VPN-detection gap are in `PRODUCT.md` → "IP address". Footer's "processing is local" line removed.
+   - **Still to do:** reflect it back on the page. Region and continent arrive as codes ("NY", "NA").
 2. **Feed it into the inference engine.** New Tier 1 rules for IP data, and city-level location for rules currently limited to the time-zone region (see `inference-map.md` Part 1, problem 1). Can unlock bolder Tier 2 conclusions.
 3. **Deep research step.** Source every claim, fill the `[STAT]` placeholders, and build out more insightful inferences, including the "Increase impact" goal under Inference engine in `PRODUCT.md`.
 
@@ -28,6 +28,7 @@ Also pending: test visitors p05/p06 need updating after the GA removal (don't ru
 ## Project rules
 
 - **Local recorders keep nothing beyond a single session.** Data recorded about a visitor (`simGA`, `B`, `X` and any future recorder) stays in page memory only: never written to cookies, localStorage, IndexedDB or a server. The page's own demonstration cookies are a separate question, flagged in `PRODUCT.md` to revisit.
+- **Check outside services against the project's purpose.** Before proposing any third party that would receive visitor data, check whether it logs, sells or shares that data, or is a registered data broker, and flag any conflict with the project's purpose. Cost and convenience come second (devlog 015).
 
 ## Files
 

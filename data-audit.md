@@ -92,12 +92,14 @@ The page is a standalone file, so it can't see the visitor's IP address itself. 
 
 | Data | Source | Possible inference |
 |------|--------|--------------------|
-| **Public IP address** | IP echo service (e.g. ipify) or a public WebRTC STUN server | The identifier every site already logs |
-| **City / region / approx. coordinates** | IP geolocation service (e.g. ipinfo, ipapi) | Where they are, typically to the city level |
-| **Internet provider / organization** | Same | Home ISP vs. university vs. employer network ("you're browsing from [company]") |
+| **Public IP address** ✓ | IP echo service (e.g. ipify) or a public WebRTC STUN server | The identifier every site already logs |
+| **City / region / approx. coordinates** ✓ | IP geolocation service (e.g. ipinfo, ipapi) | Where they are, typically to the city level |
+| **Internet provider / organization** ✓ | Same | Home ISP vs. university vs. employer network ("you're browsing from [company]") |
 | **VPN / proxy / data-center detection** | Same (often a paid tier) | Hiding location; privacy-conscious |
 | **Mobile carrier** | Same | On cellular vs. Wi-Fi |
 | **Local weather / daylight** | Weather service using IP location | "It's raining where you are": unsettling specificity from location alone |
+
+✓ = collected since devlog 015, via country.is (recorder `N` in `index.html`; also postal code, time zone and ASN). Not displayed yet. Service choice and later plans in `PRODUCT.md`.
 
 Note: GA4 already receives the visitor's IP and derived location, but those values are not shown back to the site, so the page can't display them.
 

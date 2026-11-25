@@ -91,7 +91,7 @@
 
 Each rule: **trigger** (signals) → **statement** (draft wording, as it might read on the page). Each rule belongs to one **evidence group**, which Tier 2 uses to count independent signals.
 
-**Evidence groups:** **D** device hardware · **W** installed software (fonts, voices) · **L** locale settings (language, region, clock format) · **Z** time zone · **T** time and behavior · **P** privacy tools · **A** accessibility settings · **H** visit history and referrer
+**Evidence groups:** **D** device hardware · **W** installed software (fonts, voices) · **L** locale settings (language, region, clock format) · **Z** time zone · **T** time and behavior · **P** privacy tools · **A** accessibility settings · **H** visit history and referrer · **I** internet connection (IP lookup, recorder `N`; independent of the device's own settings)
 
 ### Device and spending
 
@@ -167,6 +167,24 @@ Each rule: **trigger** (signals) → **statement** (draft wording, as it might r
 - "Your device shows time in 24-hour format, which is uncommon in the US."
 - Source: ? Note: depends on locale; only meaningful when the locale is `en-US`
 
+**T1-31 · Location from IP** · I · Obs (devlog 017)
+- Trigger: `N.status==='ok'` with city, region or country, and the provider is not a VPN/data center (T1-33)
+- "Your internet connection places you in or near [High Falls, New York] (ZIP code [12440]), to within about [6] miles. Any site you visit can work this out from your IP address, without asking for your location."
+- Replaces T1-10 when it fires (fixes Part 1, problem 1). Accuracy shown only when the radius is ≤ 50 km. Source: MaxMind GeoLite2 via country.is
+
+**T1-32 · Internet provider** · I · Obs / Likely (devlog 017)
+- Trigger: `N.org`, not a VPN/data center. Provider type from a name table (`ENG_PROVIDERS`: major US home, mobile and satellite providers, plus university and government name patterns)
+- Home: "Your internet service is [Spectrum], a home internet provider, so your IP address points to a household connection. [Spectrum] can match that address to the account holder."
+- Mobile (Likely; T-Mobile and Verizon also sell home internet over the same network): "You're connected through [Verizon]'s cellular network."
+- Satellite · university (Likely, "most likely on campus") · government (Likely) · anything else: "Your IP address is registered to [org]."
+- Source: ? provider table is hand-built; extend and check in the research step. The "anything else" case is where an employer's name would appear
+
+**T1-34 · Clock vs. connection time zone** · I · Likely (devlog 017)
+- Trigger: device time zone and IP time zone have different UTC offsets right now (not UTC, not a VPN)
+- "Your clock is set to [Pacific Time], but your connection is in [Eastern Time]. That usually means you're traveling, connected through a VPN, or your device was set up somewhere else."
+
+**T1-12 (updated, devlog 017):** compares the language region with the connection country when the IP lookup succeeds, and with the time-zone country otherwise. "US" checks across the engine (`isUS`) also use the connection country when known.
+
 ### Work and daily life
 
 **T1-15 · Desktop during working hours** · T · Obs (time) / Weak (at work)
@@ -215,6 +233,12 @@ Each rule: **trigger** (signals) → **statement** (draft wording, as it might r
 - Trigger: `S.dnt === '1'`
 - "You've asked websites not to track you."
 - Source: *n/a*
+
+**T1-33 · VPN or data center** · P · Likely (devlog 017)
+- Trigger: `N.org` matches a VPN company or hosting/cloud provider in `ENG_PROVIDERS`
+- "Your connection comes from [M247], a data-center or VPN company, not a home or mobile provider. You're most likely using a VPN or privacy relay, which hides your real location from this page."
+- Counts as a blocking signal for T2-F; location rules (T1-31, T1-34) are skipped and the time zone is used instead
+- Free substitute for paid VPN detection (`PRODUCT.md` → IP address). Misfires possible for people at cloud companies (e.g. Microsoft, Google offices)
 
 ### Accessibility ⚑
 
@@ -318,10 +342,12 @@ Tier 1, Tier 2 and assembly are now built into `index.html` (between the `INFERE
 - **T2-A ↔ T2-B conflict** can't occur on a real device under the current rules (T2-A needs desktop software, T2-B needs a phone); tested with a synthetic visitor (p20).
 - **T1-27 (live)** is computed separately by `inferLive()` and refreshed every 3 seconds.
 - **Devlog 011 (GA removed):** T1-20 now covers the ad-blocker bait only (the "your browser blocked this page's Google Analytics" variant is gone), and T1-26 now states only the visit count (the "Google first assigned your browser an ID" sentence is gone). Test visitors p05 and p06 still have GA-blocked data and targets; update them before the next run.
+- **Devlog 017 (IP rules):** T1-31 to T1-34 added and T1-12/`isUS` updated (see Part 2). T2-F's "still visible" list adds "your approximate location and internet provider" when the IP lookup worked and no VPN was detected. The profile re-renders when the lookup finishes. Tier 2 thresholds otherwise unchanged. Test visitors have no `N` data, so their results are unaffected until IP data is added to them.
 - **Devlog 013:** statements for unavailable data removed (no-referrer statement; "your search terms weren't passed"). Short "what this means" clauses added to T1-01, 03, 06, 09, 10, 11, 15/16, 20, 23, 24, 26, 27, 28, 29, 30. T1-21 rewritten in the user's wording, with the silent sound folded in.
 
 ## Part 5: Gaps noticed (not collected, would strengthen rules)
 
-- **City-level location:** needs an IP lookup service (set aside earlier). Without it, location stays at time-zone region.
+- **City-level location:** collected in recorder `N` (devlog 015) and used by the engine since devlog 017 (T1-31 to T1-34).
+- **ZIP-level demographics** (e.g. Census median household income by ZIP): could support or contradict T2-A/T2-B. Needs sourced data; research step.
 - **Keyboard layout** (`navigator.keyboard.getLayoutMap()`, Chromium): independent support for T2-C/T2-D.
 - **Global Privacy Control** (`navigator.globalPrivacyControl`): a modern counterpart to Do Not Track for group P.

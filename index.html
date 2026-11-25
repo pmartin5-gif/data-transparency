@@ -197,8 +197,7 @@ footer{padding:2.5rem;font-family:'DM Mono',monospace;font-size:0.63rem;letter-s
 </div>
 
 <footer>
-  <div>All browser-based processing on this page is local to your device.</div>
-  <div style="margin-top:0.5rem;opacity:0.5">Data Transparency Project · No third-party ad trackers</div>
+  <div style="opacity:0.5">Data Transparency Project · No third-party ad trackers</div>
 </footer>
 
 <script>
@@ -216,7 +215,7 @@ function log(t) {
     `<div class="log-line"><span class="log-t">${e.ts}</span><span class="log-e">${e.t}</span></div>`
   ).join('');
 }
-// PROJECT RULE: local recorders (simGA, X, B) keep nothing beyond a single session.
+// PROJECT RULE: local recorders (simGA, X, B, N) keep nothing beyond a single session.
 // They live in page memory only; never write their data to cookies, storage or a server.
 //
 // ── SIMULATED GOOGLE ANALYTICS (nothing is sent) ──
@@ -684,6 +683,59 @@ async function collectExtended(){
 if(document.readyState==='complete') setTimeout(collectExtended,0);
 else window.addEventListener('load',()=>setTimeout(collectExtended,0));
 
+// ── NETWORK RECORD (data-audit.md §4) ──
+// N = the visitor's public IP and what a lookup reveals about it. A standalone page
+// can't see its own visitor's IP, so this is the one place the page contacts an
+// outside service: country.is (open source, states it keeps no request logs; data
+// from MaxMind GeoLite2, looked up on its own server). Development only: switch to a
+// server function at the host when the site goes public (PRODUCT.md).
+// Page memory only, like X and B. Read by the inference engine (T1-31 to T1-34, devlog 017).
+const N = { ready:false, status:'pending', source:'country.is', raw:null };
+
+async function collectNetwork(){
+  const url='https://api.country.is/?fields=city,continent,subdivision,postal,location,asn';
+  const ctl=new AbortController(), timer=setTimeout(()=>ctl.abort(),8000);
+  const t=performance.now();
+  // subdivision/continent/postal shapes aren't documented: accept a string or an object
+  const nm=v=> v==null ? null : typeof v==='object' ? (v.name ?? v.code ?? null) : v;
+  try{
+    const res=await fetch(url,{signal:ctl.signal,credentials:'omit',cache:'no-store',referrerPolicy:'no-referrer'});
+    N.httpStatus=res.status;
+    if(res.status===429) N.status='rate-limited';
+    else if(res.status===404) N.status='no-data';
+    else if(!res.ok) N.status='error';
+    else {
+      const r=await res.json(), loc=r.location||{}, asn=r.asn||{};
+      Object.assign(N, {
+        raw: r,
+        ip: r.ip ?? null,
+        ipVersion: r.ip ? (r.ip.includes(':') ? 6 : 4) : null,
+        country: r.country ?? null,
+        continent: nm(r.continent),
+        region: nm(r.subdivision),
+        city: r.city ?? null,
+        postal: nm(r.postal),
+        latitude: loc.latitude ?? null,
+        longitude: loc.longitude ?? null,
+        accuracyKm: loc.accuracy_radius ?? null,   // GeoLite2 radius, in km
+        timeZone: loc.time_zone ?? null,
+        asn: asn.number ?? null,
+        org: asn.organization ?? null,
+      });
+      N.status='ok';
+    }
+  }catch(e){
+    // Abort = no answer in 8 s; TypeError = blocked (extension, firewall, CORS) or offline
+    N.status = e.name==='AbortError' ? 'timeout' : 'blocked';
+  }finally{
+    clearTimeout(timer);
+    N.ms=Math.round(performance.now()-t);
+    N.ready=true;
+    refreshProfile();
+  }
+}
+collectNetwork();
+
 // ── BEHAVIORAL RECORD ──
 const B = (()=>{
   const now=Date.now(), d=new Date();
@@ -848,6 +900,41 @@ const ENG_TZ_COUNTRY={'Europe/London':'GB','Europe/Dublin':'IE','Europe/Paris':'
 const ENG_CC_FONTS=['Acumin Pro','Adobe Caslon Pro','Trajan Pro','Bickham Script Pro','Kozuka Gothic Pro'];   // install with Creative Cloud apps
 const ENG_ADOBE_FONTS=['Minion Pro','Myriad Pro','Adobe Garamond Pro'];                                     // may come with Acrobat Reader too
 const ENG_DEV_FONTS=['Fira Code','JetBrains Mono','Hack','Inconsolata','IBM Plex Mono'];                     // Cascadia Code excluded (ships with Windows Terminal)
+const ENG_US_STATES={AL:'Alabama',AK:'Alaska',AZ:'Arizona',AR:'Arkansas',CA:'California',CO:'Colorado',CT:'Connecticut',DE:'Delaware',DC:'Washington, D.C.',FL:'Florida',GA:'Georgia',HI:'Hawaii',ID:'Idaho',IL:'Illinois',IN:'Indiana',IA:'Iowa',KS:'Kansas',KY:'Kentucky',LA:'Louisiana',ME:'Maine',MD:'Maryland',MA:'Massachusetts',MI:'Michigan',MN:'Minnesota',MS:'Mississippi',MO:'Missouri',MT:'Montana',NE:'Nebraska',NV:'Nevada',NH:'New Hampshire',NJ:'New Jersey',NM:'New Mexico',NY:'New York',NC:'North Carolina',ND:'North Dakota',OH:'Ohio',OK:'Oklahoma',OR:'Oregon',PA:'Pennsylvania',RI:'Rhode Island',SC:'South Carolina',SD:'South Dakota',TN:'Tennessee',TX:'Texas',UT:'Utah',VT:'Vermont',VA:'Virginia',WA:'Washington',WV:'West Virginia',WI:'Wisconsin',WY:'Wyoming',PR:'Puerto Rico'};
+// Internet provider types, matched on the lookup's organization name (first match wins, so order matters).
+// [pattern, brand name or null (use the cleaned org name), type]. Starts with major US providers; extend in the research step.
+const ENG_PROVIDERS=[
+  [/google fiber/i,'Google Fiber','home'],
+  [/space exploration|starlink|spacex/i,'Starlink','satellite'],
+  [/viasat|wildblue/i,'Viasat','satellite'],
+  [/hughes/i,'HughesNet','satellite'],
+  [/cellco|verizon wireless/i,'Verizon','mobile'],
+  [/at&t mobility|att mobility/i,'AT&T','mobile'],
+  [/t-mobile|sprint|metropcs/i,'T-Mobile','mobile'],
+  [/united states cellular|us cellular/i,'UScellular','mobile'],
+  [/dish wireless|boost/i,'Boost Mobile','mobile'],
+  [/charter|spectrum|time warner cable/i,'Spectrum','home'],
+  [/comcast/i,'Xfinity','home'],
+  [/^at&t|att services|at&t services|at&t corp/i,'AT&T','home'],
+  [/verizon|mci communications|uunet/i,'Verizon','home'],
+  [/cox communications/i,'Cox','home'],
+  [/cablevision|altice|csc holdings|optimum/i,'Optimum','home'],
+  [/frontier/i,'Frontier','home'],
+  [/centurylink|qwest|lumen|brightspeed/i,null,'home'],
+  [/windstream|kinetic/i,'Windstream','home'],
+  [/mediacom|wideopenwest|\bwow\b|rcn|astound|grande|wave broadband|cable one|sparklight|ziply|consolidated communications|tds telecom|cincinnati bell|altafiber|suddenlink|armstrong|metronet|breezeline|atlantic broadband/i,null,'home'],
+  [/universit|college|institute of technology|polytechnic|school district|research and education|internet2|\bedu\b|academ/i,null,'university'],
+  [/government|department of|county of|city of|state of|federal|\bnavy\b|\barmy\b|air force|dod network|ministry/i,null,'government'],
+  [/mullvad|31173 services|nordvpn|tefincom|proton|private internet access|expressvpn|express vpn|surfshark|windscribe|ipvanish|cyberghost|hide\.me|vpn/i,null,'hosting'],
+  [/amazon|aws|google llc|google cloud|microsoft|azure|digitalocean|linode|akamai|fastly|cloudflare|ovh|hetzner|m247|datacamp|choopa|vultr|leaseweb|oracle|ionos|contabo|packethub|clouvider|zenlayer|psychz|cdn77|g-core|quadranet|hostinger|hosting|data ?cent(er|re)|server|colocation|cloud/i,null,'hosting'],
+];
+function engProvider(org){
+  if(!org) return null;
+  for(const [re,brand,type] of ENG_PROVIDERS) if(re.test(org)) return {brand,type};
+  return null;
+}
+function engOrgName(org){ return String(org||'').replace(/,?\s+(Inc|LLC|L\.L\.C|Ltd|Corp|Corporation|Co|Company|S\.?A|GmbH|B\.?V|plc|LP|L\.P)\.?$/i,'').trim(); }
+function engUtcOffset(tz){ try{ const p=new Intl.DateTimeFormat('en-US',{timeZone:tz,timeZoneName:'shortOffset'}).formatToParts(new Date()).find(x=>x.type==='timeZoneName'); return p?p.value:null; }catch(e){ return null; } }
 
 function engTzCountry(tz){ return ENG_US_TZ.test(tz)?'US':(ENG_TZ_COUNTRY[tz]||null); }
 function engName(code,type){ try{ return new Intl.DisplayNames(['en'],{type}).of(code)||code; }catch(e){ return code; } }
@@ -916,7 +1003,12 @@ function inferProfile(D){
   const S=D.S||{}, X=D.X||{}, B=D.B||{}, C=D.cookies||{};
   const st=[];
   const add=(id,group,section,topic,conf,text,extra)=>st.push(Object.assign({id,group,section,topic,conf,text},extra||{}));
-  const tz=S.tz||'', isUS=ENG_US_TZ.test(tz), zone=profileZoneName(tz);
+  const N=D.N||{};
+  // IP data (recorder N). Not trusted for location when the provider looks like a VPN or data center.
+  const ip=N.status==='ok'?N:null, prov=ip?engProvider(ip.org):null, ipHidden=!!(prov&&prov.type==='hosting');
+  const ipLoc=ip&&!ipHidden?ip:null;
+  const tz=S.tz||'', zone=profileZoneName(tz);
+  const isUS=ipLoc&&ipLoc.country?ipLoc.country==='US':ENG_US_TZ.test(tz);   // connection country when known, else time zone
   const langTags=(S.langs&&S.langs.length?S.langs:[S.lang||'']);
   const primary=langTags[0]||'', primaryBase=primary.split('-')[0].toLowerCase();
   const fonts=new Set([...(S.fonts||[]), ...((X.fontsExtended&&X.fontsExtended.found)||[])]);
@@ -955,13 +1047,42 @@ function inferProfile(D){
   if(kb) add('T1-30','W','software','keyboard','Obs',`Your keyboard is set to a ${kb.name} layout, which usually reflects the language you type in every day.`,{supportLangs:kb.langs});
 
   // ── Place (L, Z) ──
-  if(zone) add('T1-10','Z','place','zone','Obs',`Your device’s clock is set to ${zone}. Combined with your language settings, this places you in a region before any location permission is asked.`);
+  // T1-31 · location from IP (replaces T1-10 when it fires)
+  if(ipLoc&&(ipLoc.city||ipLoc.region||ipLoc.country)){
+    const inUS=ipLoc.country==='US';
+    const region=inUS?(ENG_US_STATES[ipLoc.region]||null):null;
+    const place=[ipLoc.city,region,inUS?null:(ipLoc.country?engName(ipLoc.country,'region'):null)].filter(Boolean).join(', ');
+    const postal=ipLoc.postal?(inUS?` (ZIP code ${ipLoc.postal})`:` (postal code ${ipLoc.postal})`):'';
+    const km=ipLoc.accuracyKm, within=km&&km<=50?(inUS?`, to within about ${Math.max(1,Math.round(km*0.621))} miles`:`, to within about ${km} km`):'';
+    add('T1-31','I','place','location','Obs',`Your internet connection places you in or near ${place}${postal}${within}. Any site you visit can work this out from your IP address, without asking for your location.`,{city:ipLoc.city||null});
+  }
+  else if(zone) add('T1-10','Z','place','zone','Obs',`Your device’s clock is set to ${zone}. Combined with your language settings, this places you in a region before any location permission is asked.`);
+  // T1-32 · internet provider
+  if(ip&&ip.org&&!ipHidden){
+    const name=(prov&&prov.brand)||engOrgName(ip.org), type=prov?prov.type:null;
+    const T={
+      home:['Obs',`Your internet service is ${name}, a home internet provider, so your IP address points to a household connection. ${name} can match that address to the account holder.`],
+      mobile:['Likely',`You’re connected through ${name}’s cellular network.`],
+      satellite:['Obs',`You’re connected through ${name}, a satellite internet service.`],
+      university:['Likely',`You’re connected through ${name}’s network, so you’re most likely on campus.`],
+      government:['Likely',`You’re connected through ${name}, a government network.`],
+    }[type]||['Obs',`Your IP address is registered to ${name}. Any site can look up this name from your IP address.`];
+    add('T1-32','I','place','provider',T[0],T[1],{providerType:type||'other'});
+  }
+  // T1-34 · clock vs. connection time zone
+  if(ipLoc&&ipLoc.timeZone&&tz&&tz!=='UTC'&&tz!=='Etc/UTC'){
+    const a=engUtcOffset(tz), b=engUtcOffset(ipLoc.timeZone);
+    if(a&&b&&a!==b) add('T1-34','I','place','tz-mismatch','Likely',`Your clock is set to ${zone}, but your connection is in ${profileZoneName(ipLoc.timeZone)}. That usually means you’re traveling, connected through a VPN, or your device was set up somewhere else.`);
+  }
   const names=profileLanguageNames(langTags);
   if(names.length>1) add('T1-11','L','place','languages','Obs',`Your browser is set to ${names[0]} first, then ${engList(names.slice(1))}. Every site sees these settings and uses them to decide which language, and which ads, to show you.`);
   else if(names.length===1&&primaryBase!=='en') add('T1-11','L','place','languages','Obs',`Your browser is set to ${names[0]}. Every site sees this setting and uses it to decide which language, and which ads, to show you.`);
   const regionM=primary.match(/-([A-Z]{2})(?:-|$)/), langRegion=regionM?regionM[1]:null, tzCountry=engTzCountry(tz);
-  if(langRegion&&tzCountry&&langRegion!==tzCountry)
-    add('T1-12','L','place','lang-region','Likely',`Your browser’s language is set for ${engName(langRegion,'region')}, and your clock is set to ${zone}.`,{langRegion});
+  const ipCountry=ipLoc&&ipLoc.country||null, here=ipCountry||tzCountry;   // connection country when known (devlog 017)
+  if(langRegion&&here&&langRegion!==here)
+    add('T1-12','L','place','lang-region','Likely',ipCountry
+      ?`Your browser’s language is set for ${engName(langRegion,'region')}, and your connection is in ${ipCountry==='US'?'the United States':engName(ipCountry,'region')}.`
+      :`Your browser’s language is set for ${engName(langRegion,'region')}, and your clock is set to ${zone}.`,{langRegion});
   const loc=X.locale||{};
   if(isUS&&loc.locale==='en-US'&&(loc.hourCycle==='h23'||loc.hourCycle==='h24'))
     add('T1-14','L','place','clock','Weak','Your device shows time in 24-hour format, which is uncommon in the US.');
@@ -1009,6 +1130,7 @@ function inferProfile(D){
       ?'Your browser reports UTC time and a rounded window size, the pattern produced by Tor Browser’s protections.'
       :'Your browser reports UTC time and disguises its fingerprint, the pattern of Tor Browser or Firefox’s strictest privacy mode.',
       {blocking:['your real time zone'].concat(letterbox?['your window size']:[]), tor:true});
+  if(ipHidden) add('T1-33','P','privacy','vpn','Likely',`Your connection comes from ${(prov&&prov.brand)||engOrgName(ip.org)}, a data-center or VPN company, not a home or mobile provider. You’re most likely using a VPN or privacy relay, which hides your real location from this page.`,{blocking:['your real location']});
   const req=[]; if(S.dnt==='1') req.push('You’ve asked websites not to track you (Do Not Track). Most sites ignore this signal; it was never made legally binding.');
   if(X.gpc===true) req.push('Your browser sends Global Privacy Control, an opt-out signal recognized under California law and in several other states.');
   if(req.length) add('T1-23','P','privacy','requests','Obs',req.join(' '),{requests:req.length});
@@ -1054,7 +1176,7 @@ function inferProfile(D){
   const blocked=[...new Set(pst.flatMap(s=>s.blocking||[]))], requests=pst.reduce((n,s)=>n+(s.requests||0),0);
   if(blocked.length&&blocked.length+requests>=2){
     const tor=pst.some(s=>s.tor);
-    const visible=[tor?null:'your time zone',tor?null:'screen size','language settings','what you do on this page'].filter(Boolean);
+    const visible=[ipLoc?'your approximate location and internet provider':null,tor?null:'your time zone',tor?null:'screen size','language settings','what you do on this page'].filter(Boolean);
     concl.push({id:'T2-F',conf:'Strong',absorbs:pst.filter(s=>(s.blocking&&s.blocking.length)||s.requests).map(s=>s.id),
       text:`You’re actively hiding from trackers, and it’s partly working. Blocked or disguised: ${engList(blocked)}. Still visible to this page: ${engList(visible)}.`});
   }
@@ -1087,7 +1209,7 @@ function inferProfile(D){
 
 // ── PROFILE (page glue around the inference engine) ──
 let profileShown=false;
-function engineInput(){ return { S, X, B, cookies:{ vis } }; }
+function engineInput(){ return { S, X, B, N, cookies:{ vis } }; }
 function escHtml(t){ return String(t).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 
 function buildProfile() {
