@@ -923,10 +923,19 @@ const ENG_PROVIDERS=[
   [/centurylink|qwest|lumen|brightspeed/i,null,'home'],
   [/windstream|kinetic/i,'Windstream','home'],
   [/mediacom|wideopenwest|\bwow\b|rcn|astound|grande|wave broadband|cable one|sparklight|ziply|consolidated communications|tds telecom|cincinnati bell|altafiber|suddenlink|armstrong|metronet|breezeline|atlantic broadband/i,null,'home'],
-  [/universit|college|institute of technology|polytechnic|school district|research and education|internet2|\bedu\b|academ/i,null,'university'],
-  [/government|department of|county of|city of|state of|federal|\bnavy\b|\barmy\b|air force|dod network|ministry/i,null,'government'],
+  [/securus|jpay|viapath|global tel\*?link|\bgtl\b|telmate|smart communications|edovo|aventiv/i,null,'corrections'],
+  [/school district|public schools|\bisd\b|unified school|board of education|\bk-?12\b|county schools|city schools/i,null,'school'],
+  [/hospital|health system|healthcare system|health care system|medical cent(er|re)|medical college|kaiser foundation|mayo clinic|cleveland clinic/i,null,'hospital'],
+  [/librar(y|ies)/i,null,'library'],
+  [/boingo|single digits|eleven wireless|hospitality network|deep blue communications|guest-?tek|airport|hotel|marriott|hilton|hyatt|wyndham/i,null,'public-wifi'],
+  [/dod network|navy network|air force systems|\bnavy\b|\barmy\b|air force|marine corps|defense information|military/i,null,'military'],
+  [/universit(y|ies)|universidad|universit[éä]|college|institute of technology|polytechnic|research and education|internet2|\bedu\b|academ/i,null,'university'],
+  [/government|department of|county of|city of|state of|federal|ministry/i,null,'government'],
+  [/akamai|fastly|cloudflare/i,null,'relay'],   // Apple iCloud Private Relay exits through these; keeps the rough region
   [/mullvad|31173 services|nordvpn|tefincom|proton|private internet access|expressvpn|express vpn|surfshark|windscribe|ipvanish|cyberghost|hide\.me|vpn/i,null,'hosting'],
-  [/amazon|aws|google llc|google cloud|microsoft|azure|digitalocean|linode|akamai|fastly|cloudflare|ovh|hetzner|m247|datacamp|choopa|vultr|leaseweb|oracle|ionos|contabo|packethub|clouvider|zenlayer|psychz|cdn77|g-core|quadranet|hostinger|hosting|data ?cent(er|re)|server|colocation|cloud/i,null,'hosting'],
+  [/amazon|aws|google llc|google cloud|microsoft|azure|digitalocean|linode|ovh|hetzner|m247|datacamp|choopa|vultr|leaseweb|oracle|ionos|contabo|packethub|clouvider|zenlayer|psychz|cdn77|g-core|quadranet|hostinger|hosting|data ?cent(er|re)|server|colocation|cloud/i,null,'hosting'],
+  // last: names that look like a smaller internet provider, so they aren't mistaken for an employer (T2-G)
+  [/communications|telecom|telephone|broadband|internet|wireless|cable|fiber|fibre|\bnet\b|networks?\b|cooperative|\bco-?op\b|online|\bisp\b/i,null,'isp'],
 ];
 function engProvider(org){
   if(!org) return null;
@@ -1005,7 +1014,7 @@ function inferProfile(D){
   const add=(id,group,section,topic,conf,text,extra)=>st.push(Object.assign({id,group,section,topic,conf,text},extra||{}));
   const N=D.N||{};
   // IP data (recorder N). Not trusted for location when the provider looks like a VPN or data center.
-  const ip=N.status==='ok'?N:null, prov=ip?engProvider(ip.org):null, ipHidden=!!(prov&&prov.type==='hosting');
+  const ip=N.status==='ok'?N:null, prov=ip?engProvider(ip.org):null, ipHidden=!!(prov&&(prov.type==='hosting'||prov.type==='relay'));
   const ipLoc=ip&&!ipHidden?ip:null;
   const tz=S.tz||'', zone=profileZoneName(tz);
   const isUS=ipLoc&&ipLoc.country?ipLoc.country==='US':ENG_US_TZ.test(tz);   // connection country when known, else time zone
@@ -1050,11 +1059,13 @@ function inferProfile(D){
   // T1-31 · location from IP (replaces T1-10 when it fires)
   if(ipLoc&&(ipLoc.city||ipLoc.region||ipLoc.country)){
     const inUS=ipLoc.country==='US';
+    const coarse=!!(prov&&prov.type==='mobile');   // carrier IPs locate the carrier's regional gateway, not the phone: state/country only
     const region=inUS?(ENG_US_STATES[ipLoc.region]||null):null;
-    const place=[ipLoc.city,region,inUS?null:(ipLoc.country?engName(ipLoc.country,'region'):null)].filter(Boolean).join(', ');
-    const postal=ipLoc.postal?(inUS?` (ZIP code ${ipLoc.postal})`:` (postal code ${ipLoc.postal})`):'';
-    const km=ipLoc.accuracyKm, within=km&&km<=50?(inUS?`, to within about ${Math.max(1,Math.round(km*0.621))} miles`:`, to within about ${km} km`):'';
-    add('T1-31','I','place','location','Obs',`Your internet connection places you in or near ${place}${postal}${within}. Any site you visit can work this out from your IP address, without asking for your location.`,{city:ipLoc.city||null});
+    const country=inUS?null:(ipLoc.country?engName(ipLoc.country,'region'):null);
+    const place=(coarse?[region||(inUS?'the United States':null),country]:[ipLoc.city,region,country]).filter(Boolean).join(', ');
+    const postal=!coarse&&ipLoc.postal?(inUS?` (ZIP code ${ipLoc.postal})`:` (postal code ${ipLoc.postal})`):'';
+    const km=ipLoc.accuracyKm, within=!coarse&&km&&km<=50?(inUS?`, to within about ${Math.max(1,Math.round(km*0.621))} miles`:`, to within about ${km} km`):'';
+    if(place) add('T1-31','I','place','location','Obs',`Your internet connection places you ${coarse?'in':'in or near'} ${place}${postal}${within}. Any site you visit can work this out from your IP address, without asking for your location.`,{city:ipLoc.city||null});
   }
   else if(zone) add('T1-10','Z','place','zone','Obs',`Your device’s clock is set to ${zone}. Combined with your language settings, this places you in a region before any location permission is asked.`);
   // T1-32 · internet provider
@@ -1066,13 +1077,20 @@ function inferProfile(D){
       satellite:['Obs',`You’re connected through ${name}, a satellite internet service.`],
       university:['Likely',`You’re connected through ${name}’s network, so you’re most likely on campus.`],
       government:['Likely',`You’re connected through ${name}, a government network.`],
+      school:['Likely',`You’re connected through ${name}’s network, a school district, so you’re most likely a student or a member of school staff.`],
+      hospital:['Likely',`You’re connected through ${name}’s network, a hospital or health system, so you’re most likely a patient, a visitor or a member of staff.`],
+      library:['Likely',`You’re connected through ${name}’s network, a public library.`],
+      'public-wifi':['Likely',`You’re on Wi-Fi run by ${name}, a company that provides networks for hotels, airports and other public places, so you’re most likely away from home.`],
+      military:['Likely',`You’re connected through ${name}, a US military network.`],
+      corrections:['Likely',`You’re connected through ${name}, a company that runs tablets and internet access in prisons and jails.`],
+      isp:['Obs',`Your internet service is ${name}.`],
     }[type]||['Obs',`Your IP address is registered to ${name}. Any site can look up this name from your IP address.`];
-    add('T1-32','I','place','provider',T[0],T[1],{providerType:type||'other'});
+    add('T1-32','I','place','provider',T[0],T[1],{providerType:type||'other',orgName:name,costSignal:type==='library'});
   }
   // T1-34 · clock vs. connection time zone
   if(ipLoc&&ipLoc.timeZone&&tz&&tz!=='UTC'&&tz!=='Etc/UTC'){
     const a=engUtcOffset(tz), b=engUtcOffset(ipLoc.timeZone);
-    if(a&&b&&a!==b) add('T1-34','I','place','tz-mismatch','Likely',`Your clock is set to ${zone}, but your connection is in ${profileZoneName(ipLoc.timeZone)}. That usually means you’re traveling, connected through a VPN, or your device was set up somewhere else.`);
+    if(a&&b&&a!==b) add('T1-34','I','place','tz-mismatch','Likely',`Your clock is set to ${zone}, but your connection is in ${profileZoneName(ipLoc.timeZone)}. Most devices set their clock automatically, so this usually means you’re connected through a VPN or your clock was set by hand. Less often, you’ve just traveled.`);
   }
   const names=profileLanguageNames(langTags);
   if(names.length>1) add('T1-11','L','place','languages','Obs',`Your browser is set to ${names[0]} first, then ${engList(names.slice(1))}. Every site sees these settings and uses them to decide which language, and which ads, to show you.`);
@@ -1130,7 +1148,8 @@ function inferProfile(D){
       ?'Your browser reports UTC time and a rounded window size, the pattern produced by Tor Browser’s protections.'
       :'Your browser reports UTC time and disguises its fingerprint, the pattern of Tor Browser or Firefox’s strictest privacy mode.',
       {blocking:['your real time zone'].concat(letterbox?['your window size']:[]), tor:true});
-  if(ipHidden) add('T1-33','P','privacy','vpn','Likely',`Your connection comes from ${(prov&&prov.brand)||engOrgName(ip.org)}, a data-center or VPN company, not a home or mobile provider. You’re most likely using a VPN or privacy relay, which hides your real location from this page.`,{blocking:['your real location']});
+  if(ipHidden&&prov.type==='relay') add('T1-33','P','privacy','vpn','Likely',`Your connection comes from ${engOrgName(ip.org)}, not a home or mobile provider. You’re most likely using a privacy relay such as Apple’s iCloud Private Relay, which hides your exact location but keeps your rough region.`,{blocking:['your exact location'],relay:true});
+  else if(ipHidden) add('T1-33','P','privacy','vpn','Likely',`Your connection comes from ${(prov&&prov.brand)||engOrgName(ip.org)}, a data-center or VPN company, not a home or mobile provider. You’re most likely using a VPN, which hides your real location from this page.`,{blocking:['your real location']});
   const req=[]; if(S.dnt==='1') req.push('You’ve asked websites not to track you (Do Not Track). Most sites ignore this signal; it was never made legally binding.');
   if(X.gpc===true) req.push('Your browser sends Global Privacy Control, an opt-out signal recognized under California law and in several other states.');
   if(req.length) add('T1-23','P','privacy','requests','Obs',req.join(' '),{requests:req.length});
@@ -1176,7 +1195,7 @@ function inferProfile(D){
   const blocked=[...new Set(pst.flatMap(s=>s.blocking||[]))], requests=pst.reduce((n,s)=>n+(s.requests||0),0);
   if(blocked.length&&blocked.length+requests>=2){
     const tor=pst.some(s=>s.tor);
-    const visible=[ipLoc?'your approximate location and internet provider':null,tor?null:'your time zone',tor?null:'screen size','language settings','what you do on this page'].filter(Boolean);
+    const visible=[ipLoc?'your approximate location and internet provider':(pst.some(s=>s.relay)?'your rough region':null),tor?null:'your time zone',tor?null:'screen size','language settings','what you do on this page'].filter(Boolean);
     concl.push({id:'T2-F',conf:'Strong',absorbs:pst.filter(s=>(s.blocking&&s.blocking.length)||s.requests).map(s=>s.id),
       text:`You’re actively hiding from trackers, and it’s partly working. Blocked or disguised: ${engList(blocked)}. Still visible to this page: ${engList(visible)}.`});
   }
@@ -1185,6 +1204,22 @@ function inferProfile(D){
   const suppressed=[];
   if(concl.some(c=>c.id==='T2-A')&&concl.some(c=>c.id==='T2-B')){
     for(const id of ['T2-A','T2-B']){ concl.splice(concl.findIndex(c=>c.id===id),1); suppressed.push({id,reason:'contradicts '+(id==='T2-A'?'T2-B':'T2-A')+'; facts shown instead'}); }
+  }
+  // T2-G · at work at [employer]: unrecognized organization (I) + weekday working hours on a computer (T)
+  const p32=get('T1-32'), t15=get('T1-15'), t16=get('T1-16');
+  if(p32&&p32.providerType==='other'&&t15&&t15.atWork)
+    concl.push({id:'T2-G',conf:'Likely',absorbs:['T1-32','T1-15'],
+      text:`You’re most likely at work, and ${p32.orgName} is most likely your employer.`});
+  // T2-H · living on campus: university network (I) + middle of the night (T)
+  if(p32&&p32.providerType==='university'&&t16)
+    concl.push({id:'T2-H',conf:'Likely',absorbs:['T1-32','T1-16'],
+      text:`Being on a university network in the middle of the night suggests you live on campus, which usually means you’re a student.`});
+  // T2-I · away from home country: language region (L) and clock (Z) agree on one country; the connection (I) is in another
+  const homeCC=langRegion&&tzCountry&&langRegion===tzCountry?langRegion:null;
+  if(homeCC&&ipCountry&&ipCountry!==homeCC){
+    const cn=c=>c==='US'?'the United States':engName(c,'region');
+    concl.push({id:'T2-I',conf:'Likely',absorbs:['T1-12','T1-34'].filter(id=>get(id)),
+      text:`Your language and clock are both set for ${cn(homeCC)}, but you’re connecting from ${cn(ipCountry)}. You’re most likely traveling, or using a VPN this page couldn’t identify.`});
   }
   // one statement per topic (highest confidence wins)
   const byTopic={};

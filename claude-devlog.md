@@ -432,3 +432,33 @@ A record of each instruction exchange. Newest entries at the bottom.
 - Not changed: tests (not edited or run). Syntax check only
 
 **Verdict:** Fulfilled. ("Yes")
+
+---
+
+## 018 · IP fixes, network types, new Tier 2, inference-map pass
+**Date:** 2026-11-25
+
+**Instruction:** (Following a review of new IP inferences, answered as a question.) Make the fixes the review highlighted, and consider pasted notes: sunset/daylight and area-only demographics aren't interesting (aim for "how did it know that" about the person; area data only as input, e.g. income band, rent, home ownership); network types and employer are very interesting; "last 4 years" ties to the 2–4 year phone replacement cycle (verify in research); cross-reference area industries with socioeconomic signals to infer industry.
+
+**Interpretations:**
+1. Four fixes in `index.html` (mobile → state only; T1-34 wording; privacy-relay variant; school districts split out). Notes recorded in `PRODUCT.md` for research, nothing built. Asked: record the review's candidates in `inference-map.md`? Build network-type/employer rules now or wait?
+   - *Answers:* yes, take a pass through the whole of `inference-map.md` using the notes as guiding principles; update the provider table now as a quick pass.
+2. Fixes; provider table quick pass (hospital, library, public Wi-Fi, military, prison tablets); full `inference-map.md` pass (principles in Standards, stale entries brought in line, area stats moved to inputs, device-age angle, Tier 2 reworked, dropped list, data needs); `PRODUCT.md` note; no Tier 2 building, research or tests.
+   - *Correction:* build the new Tier 2 conclusions as well. *Confirmed* otherwise.
+
+**Confirmed intent:** Interpretation 2, with new Tier 2 conclusions built.
+
+**Executed:**
+- `index.html` engine:
+  - T1-31: mobile carriers get state/country only (no city, ZIP, miles)
+  - T1-34: "usually a VPN or a clock set by hand; less often, you've just traveled"
+  - Provider table: new types `relay` (Akamai/Cloudflare/Fastly), `school`, `hospital`, `library`, `public-wifi`, `military`, `corrections`, and a generic `isp` catch-all (so small ISPs aren't read as employers); "Universal" no longer matches universities. T1-32 wording for each
+  - T1-33: separate privacy-relay wording ("keeps your rough region"); T2-F shows "your rough region" as still visible
+  - T2-B: public library network counts as a cost signal
+  - New, built: T2-G at work at [employer] (unrecognized org + weekday working hours on a computer); T2-H living on campus (university network + midnight–5 AM); T2-I away from home country (language + clock agree on one country, connection in another)
+  - Not built (need data): T2-A location path, T2-C ZIP support, T2-D timeframe, T2-J likely industry. Marked Planned
+- `inference-map.md`: full pass. Status line; three guiding principles in Standards; Part 1 problem 1 marked addressed; T1-01 device-age plan; T1-10/12/14 updated; T1-30 entry added; T1-20/23/26 brought in line with what's built; T1-31–34 rewritten; Tier 2 status key, T2-A–D updated, T2-F–J added; "considered and dropped" list; assembly note 9; implementation note; Part 5 data-needs list
+- `PRODUCT.md`: guiding-principles line under "Increase impact"
+- Not changed: tests (not edited or run). Syntax check only
+
+**Verdict:** Fulfilled. ("Yes")
