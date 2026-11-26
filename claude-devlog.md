@@ -1028,3 +1028,19 @@ A record of each instruction exchange. Newest entries at the bottom.
 - `CLAUDE.md` → Learnings: new entry "Don't soften statements", citing the four removals in 045, with a note that saying when something is a likelihood still applies (`inference-map.md` standard).
 
 **Verdict:** Fulfilled. ("Yes please add that, that's good.")
+
+## 047 · Next up: testing complete, front end next
+**Date:** 2026-11-26
+
+**Instruction:** Update the to-do list, mark the testing phase complete, and note that we're moving on to the front end.
+
+**Interpretations:**
+1. `CLAUDE.md` → Next up: step 3 marked complete (devlogs 041–045) with the review's outcomes, stale v07/v19 notes removed; step 4, the front-end pass, becomes "Now", its IP-display note kept.
+   - *Confirmed.*
+
+**Confirmed intent:** Interpretation 1.
+
+**Executed:**
+- `CLAUDE.md` → Next up: step 3 "Testing complete"; step 4 "Now: the front-end pass". Added a note that `tests/results.md` predates the 045 wording.
+
+**Verdict:** Fulfilled. ("yes")

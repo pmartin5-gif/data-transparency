@@ -26,9 +26,8 @@ Start here when resuming. First read `PRODUCT.md`, `inference-map.md` (incl. "Im
 **Next, in order (set 2026-11-26):**
 1. ✓ **Bundle the ZIP datasets and the state GPC list** (devlog 030), then finish the engine (devlogs 031–037): area rules wired in, Planned items built, the user's review list and decision backlog cleared. Census ACS by ZIP and the GPC list in `data/` (see `data/README.md`).
 2. ✓ **User's review list** (devlogs 035, 037).
-3. ✓ **New test visitors, run** (devlogs 041–042): 30 new visitors (v01–v30) replace the old set; the runner supplies area data (`Z`). First run: every rule fired, all targets hit.
-   - **Now: review `tests/results.md`.** Flagged so far: v07 (Deutsche Telekom isn't recognized as a provider, so T2-O treats a home connection as an employer); v19 (T2-J area path fired for an iPhone in a low-income ZIP; consistent with the rule, untargeted).
-4. **Then: the front-end pass** (`PRODUCT.md` → "Front-end pass"), including reflecting IP data on the page (region and continent arrive as codes).
+3. ✓ **Testing complete** (devlogs 041–045): 30 new visitors (v01–v30) with area data (`Z`) from the runner; every rule fired, all targets hit. The user's review led to conclusions for US visitors only, premium iPhones only, wording changes, "without asking" said once, and shorter paragraphs. `tests/results.md` predates the 045 wording; rerun before the next review.
+4. **Now: the front-end pass** (`PRODUCT.md` → "Front-end pass"), including reflecting IP data on the page (region and continent arrive as codes).
 
 ## Project rules
 
