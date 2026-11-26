@@ -1,207 +1,354 @@
 {
-  "_note": "Made-up test visitors. Each persona is deep-merged over 'base'. Values mirror the page's S (sync signals), X (extended signals), B (behavior) and cookies objects. Run: node tests/run-personas.js",
+  "_note": "Made-up test visitors (second set, devlog 041). Each visitor is deep-merged over 'base'. Values mirror the page's S (sync signals), X (extended signals), B (behavior), N (IP lookup) and cookies objects. The runner supplies Z (area data from data/) for US connections, as the page does. IPs are from documentation ranges; ZIP codes are real so the Census lookups run. Run: node tests/run-personas.js",
   "base": {
     "S": {
       "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36",
       "lang": "en-US", "langs": ["en-US", "en"], "tz": "America/New_York",
-      "cores": 8, "ram": 8, "pxr": 1, "sw": 1920, "sh": 1080, "vw": 1400, "vh": 880,
+      "cores": 8, "ram": 8, "pxr": 1, "sw": 1920, "sh": 1080, "vw": 1400, "vh": 880, "touch": 0,
       "isMobile": false, "isMac": false, "isWin": true, "isLinux": false, "isIOS": false, "isAndroid": false,
-      "dnt": null, "conn": { "type": "4g", "downlink": 10, "rtt": 50, "save": false },
+      "dnt": null, "conn": { "type": "4g", "downlink": 10, "rtt": 50, "save": false }, "battery": null,
       "ref": "", "histLen": 1, "fonts": [], "reducedMotion": false,
-      "canvas": "a3f9c21e0b1d2c", "canvasStable": true, "audio": "35.73833834", "adblock": false
+      "canvas": "7c2e91d4a05bf3", "canvasStable": true, "audio": "35.73833834", "adblock": false
     },
     "X": {
       "ready": true, "clientHints": null, "webgl": { "unmaskedRenderer": "" }, "webgpu": null,
       "locale": { "locale": "en-US", "hourCycle": "h12" },
       "mediaPrefs": { "forcedColors": false, "contrast": "no-preference", "invertedColors": false, "colorGamut": "srgb", "dynamicRange": "standard" },
       "screen": { "isExtended": false }, "fontsExtended": { "found": [] }, "voicesList": [],
-      "tracker": { "gaScriptLoaded": true }, "audioCheck": { "stable": true, "read2": "35.73833834" },
+      "audioCheck": { "stable": true, "read2": "35.73833834" },
       "webdriver": false, "keyboardLayout": null, "gpc": null
     },
-    "B": { "visitTime": { "hour": 14, "minute": 10, "dayOfWeek": 2 }, "copies": [], "tab": { "hiddenCount": 0, "awayMs": 0 }, "sectionsMs": {} },
-    "cookies": { "vis": 1, "ga": null }
+    "B": { "visitTime": { "hour": 19, "minute": 30, "dayOfWeek": 2 }, "copies": [], "tab": { "hiddenCount": 0, "awayMs": 0 }, "sectionsMs": {}, "mouse": { "moves": 0 } },
+    "N": {},
+    "cookies": { "vis": 1 }
   },
   "personas": [
     {
-      "id": "p01", "name": "MacBook Pro M3 Max, Creative Cloud fonts, Eastern, weekday afternoon, from Google",
-      "targets": ["T1-04", "T1-17", "T2-A"],
+      "id": "v01", "name": "MacBook Pro M4 Max, Creative Cloud fonts, Comcast home in Palo Alto (high-income ZIP), GPC in California, from Google",
+      "targets": ["T1-04", "T1-17", "T1-23", "T1-29", "T1-31", "T1-32", "T1-36", "T2-A"],
       "data": {
-        "S": { "isWin": false, "isMac": true, "pxr": 2, "sw": 1728, "sh": 1117, "vw": 1512, "vh": 860, "fonts": ["Futura", "Avenir", "Gill Sans", "Myriad Pro", "Minion Pro"], "ref": "https://www.google.com/" },
-        "X": { "webgl": { "unmaskedRenderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M3 Max, Unspecified Version)" },
-               "mediaPrefs": { "colorGamut": "p3", "dynamicRange": "high" }, "fontsExtended": { "found": ["Acumin Pro", "Adobe Caslon Pro", "Avenir Next"] } }
+        "S": { "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36",
+               "isWin": false, "isMac": true, "pxr": 2, "sw": 1728, "sh": 1117, "vw": 1512, "vh": 860, "tz": "America/Los_Angeles", "ref": "https://www.google.com/" },
+        "X": { "webgl": { "unmaskedRenderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M4 Max, Unspecified Version)" },
+               "fontsExtended": { "found": ["Acumin Pro", "Adobe Caslon Pro"] }, "gpc": true },
+        "B": { "visitTime": { "hour": 20, "minute": 15, "dayOfWeek": 3 } },
+        "N": { "status": "ok", "ip": "203.0.113.14", "country": "US", "region": "CA", "city": "Palo Alto", "postal": "94301", "accuracyKm": 10, "timeZone": "America/Los_Angeles", "org": "Comcast Cable Communications, LLC" }
       }
     },
     {
-      "id": "p02", "name": "Windows 11 gaming PC, RTX 4080, HDR monitor, Creative Cloud, Central, Saturday night",
-      "targets": ["T1-03", "T1-05", "T1-17", "T2-A"],
+      "id": "v02", "name": "Windows 11 gaming PC, RTX 4090, HDR monitor, Optimum home in Hoboken (high-income ZIP), GPC in New Jersey, Saturday night",
+      "targets": ["T1-03", "T1-05", "T1-23", "T1-31", "T1-32", "T2-A"],
       "data": {
-        "S": { "tz": "America/Chicago", "fonts": ["Calibri", "Segoe UI", "Franklin Gothic Medium"] },
         "X": { "clientHints": { "platformVersion": "15.0.0" },
-               "webgl": { "unmaskedRenderer": "ANGLE (NVIDIA, NVIDIA GeForce RTX 4080 (0x00002704) Direct3D11 vs_5_0 ps_5_0, D3D11)" },
-               "mediaPrefs": { "colorGamut": "p3", "dynamicRange": "high" }, "fontsExtended": { "found": ["Trajan Pro", "Bahnschrift"] } },
-        "B": { "visitTime": { "hour": 21, "minute": 40, "dayOfWeek": 6 } }
+               "webgl": { "unmaskedRenderer": "ANGLE (NVIDIA, NVIDIA GeForce RTX 4090 (0x00002684) Direct3D11 vs_5_0 ps_5_0, D3D11)" },
+               "mediaPrefs": { "colorGamut": "p3", "dynamicRange": "high" }, "gpc": true },
+        "B": { "visitTime": { "hour": 22, "minute": 5, "dayOfWeek": 6 } },
+        "N": { "status": "ok", "ip": "203.0.113.27", "country": "US", "region": "NJ", "city": "Hoboken", "postal": "07030", "accuracyKm": 5, "timeZone": "America/New_York", "org": "CSC Holdings, LLC" }
       }
     },
     {
-      "id": "p03", "name": "Budget Samsung (international model), 2 GB, data saver, Spanish (Mexico), Central, 11 PM",
-      "targets": ["T1-01", "T1-07", "T1-08", "T1-11", "T1-12", "T2-B", "T2-D"],
+      "id": "v03", "name": "Budget Samsung (international model), 2 GB, data saver, Spanish (Mexico), T-Mobile in Texas, 11 PM",
+      "targets": ["T1-01", "T1-07", "T1-08", "T1-11", "T1-12", "T1-31", "T1-32", "T2-B", "T2-D"],
       "data": {
         "S": { "ua": "Mozilla/5.0 (Linux; Android 14; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Mobile Safari/537.36",
-               "isWin": false, "isAndroid": true, "isMobile": true, "ram": 2, "cores": 8, "pxr": 2.6, "sw": 412, "sh": 915, "vw": 412, "vh": 780,
+               "isWin": false, "isAndroid": true, "isMobile": true, "touch": 5, "ram": 2, "pxr": 2.6, "sw": 412, "sh": 915, "vw": 412, "vh": 780,
                "lang": "es-MX", "langs": ["es-MX", "es", "en-US", "en"], "tz": "America/Chicago", "conn": { "type": "4g", "downlink": 2.1, "rtt": 150, "save": true } },
         "X": { "clientHints": { "model": "SM-A155F", "platformVersion": "14.0.0" }, "locale": { "locale": "es-MX", "hourCycle": "h23" } },
-        "B": { "visitTime": { "hour": 23, "minute": 5, "dayOfWeek": 3 } }
+        "B": { "visitTime": { "hour": 23, "minute": 10, "dayOfWeek": 3 } },
+        "N": { "status": "ok", "ip": "198.51.100.41", "country": "US", "region": "TX", "city": "Houston", "postal": "77036", "accuracyKm": 100, "timeZone": "America/Chicago", "org": "T-Mobile USA, Inc." }
       }
     },
     {
-      "id": "p04", "name": "Windows 10 laptop, Spanish (US) first, Spanish keyboard, Spanish voice pack, Pacific",
-      "targets": ["T1-06", "T1-11", "T1-13", "T1-30", "T2-C"],
+      "id": "v04", "name": "Windows 10 laptop, Spanish (US) first, Spanish keyboard and voice pack, Spectrum home in East Los Angeles (Spanish-speaking ZIP)",
+      "targets": ["T1-06", "T1-11", "T1-13", "T1-30", "T1-31", "T1-32", "T2-C", "T2-M"],
       "data": {
         "S": { "lang": "es-US", "langs": ["es-US", "es", "en"], "tz": "America/Los_Angeles" },
-        "X": { "clientHints": { "platformVersion": "10.0.0" }, "locale": { "locale": "es-US", "hourCycle": "h12" },
-               "voicesList": [ { "name": "Microsoft David", "lang": "en-US", "local": true }, { "name": "Microsoft Sabina", "lang": "es-MX", "local": true }, { "name": "Google español", "lang": "es-ES", "local": false } ],
-               "keyboardLayout": { "KeyQ": "q", "KeyY": "y", "KeyA": "a", "Semicolon": "ñ" } }
+        "X": { "clientHints": { "platformVersion": "10.0.0" }, "keyboardLayout": { "KeyQ": "q", "KeyY": "y", "KeyA": "a", "Semicolon": "ñ" },
+               "voicesList": [ { "name": "Microsoft David", "lang": "en-US", "local": true }, { "name": "Microsoft Sabina", "lang": "es-MX", "local": true } ] },
+        "N": { "status": "ok", "ip": "198.51.100.58", "country": "US", "region": "CA", "city": "East Los Angeles", "postal": "90022", "accuracyKm": 5, "timeZone": "America/Los_Angeles", "org": "Charter Communications Inc" }
       }
     },
     {
-      "id": "p05", "name": "Tor Browser: UTC, en-US, letterboxed window, randomized canvas, analytics blocked",
-      "targets": ["T1-20", "T1-21", "T1-22", "T2-F"],
+      "id": "v05", "name": "Tor Browser: UTC, English, letterboxed window, randomized canvas, exit node in a German data center",
+      "targets": ["T1-10", "T1-21", "T1-22", "T1-33", "T2-F"],
       "data": {
-        "S": { "tz": "UTC", "langs": ["en-US", "en"], "vw": 1000, "vh": 900, "canvasStable": false, "isWin": false, "isLinux": true,
-               "ua": "Mozilla/5.0 (Windows NT 10.0; rv:128.0) Gecko/20100101 Firefox/128.0", "conn": null },
-        "X": { "tracker": { "gaScriptLoaded": false }, "audioCheck": { "stable": false, "read2": "35.73833901" } },
-        "B": { "visitTime": { "hour": 14, "minute": 10, "dayOfWeek": 2 } }
+        "S": { "ua": "Mozilla/5.0 (Windows NT 10.0; rv:128.0) Gecko/20100101 Firefox/128.0", "tz": "UTC", "vw": 1000, "vh": 800, "canvasStable": false },
+        "X": { "locale": { "locale": "en-US", "hourCycle": "h12" } },
+        "B": { "visitTime": { "hour": 16, "minute": 45, "dayOfWeek": 4 } },
+        "N": { "status": "ok", "ip": "192.0.2.77", "country": "DE", "region": "BY", "city": "Nuremberg", "postal": "90403", "accuracyKm": 20, "timeZone": "Europe/Berlin", "org": "Hetzner Online GmbH" }
       }
     },
     {
-      "id": "p06", "name": "Brave on a Mac: randomized canvas and audio, analytics blocked, ad blocker, GPC",
-      "targets": ["T1-20", "T1-21", "T1-23", "T2-F"],
+      "id": "v06", "name": "Brave on a MacBook Air M2: randomized canvas and audio, ad blocker, GPC, Comcast home in Boulder (below-median ZIP), Colorado",
+      "targets": ["T1-04", "T1-20", "T1-21", "T1-23", "T1-31", "T1-32", "T1-36", "T2-F", "T2-L", "T2-M"],
       "data": {
-        "S": { "isWin": false, "isMac": true, "pxr": 2, "canvasStable": false, "adblock": true, "tz": "America/Denver" },
-        "X": { "tracker": { "gaScriptLoaded": false }, "audioCheck": { "stable": false, "read2": "35.73833112" }, "gpc": true }
+        "S": { "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36",
+               "isWin": false, "isMac": true, "pxr": 2, "sw": 1470, "sh": 956, "vw": 1470, "vh": 830, "tz": "America/Denver", "canvasStable": false, "adblock": true },
+        "X": { "webgl": { "unmaskedRenderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M2, Unspecified Version)" },
+               "audioCheck": { "stable": false, "read2": "35.73812207" }, "gpc": true },
+        "N": { "status": "ok", "ip": "198.51.100.63", "country": "US", "region": "CO", "city": "Boulder", "postal": "80302", "accuracyKm": 10, "timeZone": "America/Denver", "org": "Comcast Cable Communications, LLC" }
       }
     },
     {
-      "id": "p07", "name": "Chrome on Linux in Berlin: German, QWERTZ keyboard, programming fonts",
-      "targets": ["T1-18", "T1-11", "T1-30", "T1-10"],
+      "id": "v07", "name": "Chrome on Linux in Berlin: German, QWERTZ keyboard, programming fonts, Deutsche Telekom home, Sunday afternoon",
+      "targets": ["T1-03", "T1-11", "T1-18", "T1-30", "T1-31", "T1-32"],
       "data": {
-        "S": { "isWin": false, "isLinux": true, "tz": "Europe/Berlin", "lang": "de-DE", "langs": ["de-DE", "de"], "fonts": ["Fira Code", "JetBrains Mono", "DejaVu Sans", "Ubuntu"] },
-        "X": { "locale": { "locale": "de-DE", "hourCycle": "h23" }, "fontsExtended": { "found": ["Noto Sans", "Hack", "Inconsolata"] },
-               "keyboardLayout": { "KeyQ": "q", "KeyY": "z", "KeyA": "a", "Semicolon": "ö" },
-               "webgl": { "unmaskedRenderer": "AMD Radeon RX 6700 XT (radeonsi, navi22, LLVM 17.0.6, DRM 3.54, 6.5.0)" } }
+        "S": { "ua": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36",
+               "isWin": false, "isLinux": true, "lang": "de-DE", "langs": ["de-DE", "de"], "tz": "Europe/Berlin", "fonts": ["DejaVu Sans", "Ubuntu"] },
+        "X": { "webgl": { "unmaskedRenderer": "ANGLE (Intel, Mesa Intel(R) UHD Graphics 620 (KBL GT2), OpenGL 4.6)" },
+               "locale": { "locale": "de-DE", "hourCycle": "h23" }, "fontsExtended": { "found": ["JetBrains Mono", "Fira Code"] },
+               "keyboardLayout": { "KeyQ": "q", "KeyY": "z", "KeyA": "a", "Semicolon": "ö" } },
+        "B": { "visitTime": { "hour": 15, "minute": 20, "dayOfWeek": 0 } },
+        "N": { "status": "ok", "ip": "192.0.2.12", "country": "DE", "region": "BE", "city": "Berlin", "postal": "10115", "accuracyKm": 20, "timeZone": "Europe/Berlin", "org": "Deutsche Telekom AG" }
       }
     },
     {
-      "id": "p08", "name": "Office worker: Windows 11, two monitors, weekday 10 AM, from LinkedIn",
-      "targets": ["T1-09", "T1-15", "T1-29"],
+      "id": "v08", "name": "Office worker: Windows 11, two monitors, weekday 10 AM, from LinkedIn, on a company network in Chicago",
+      "targets": ["T1-09", "T1-15", "T1-29", "T1-31", "T1-32", "T2-G"],
       "data": {
-        "S": { "fonts": ["Calibri", "Cambria", "Segoe UI", "Gill Sans", "Franklin Gothic Medium"], "ref": "https://www.linkedin.com/" },
+        "S": { "tz": "America/Chicago", "ref": "https://www.linkedin.com/" },
+        "X": { "clientHints": { "platformVersion": "15.0.0" }, "screen": { "isExtended": true } },
+        "B": { "visitTime": { "hour": 10, "minute": 5, "dayOfWeek": 2 } },
+        "N": { "status": "ok", "ip": "203.0.113.88", "country": "US", "region": "IL", "city": "Chicago", "postal": "60606", "accuracyKm": 20, "timeZone": "America/Chicago", "org": "Brightline Freight Partners" }
+      }
+    },
+    {
+      "id": "v09", "name": "Hospital staff: Windows 10 desktop on a hospital network, weekday 2 PM, Cleveland",
+      "targets": ["T1-06", "T1-15", "T1-31", "T1-32", "T2-J"],
+      "data": {
+        "X": { "clientHints": { "platformVersion": "10.0.0" } },
+        "B": { "visitTime": { "hour": 14, "minute": 0, "dayOfWeek": 1 } },
+        "N": { "status": "ok", "ip": "203.0.113.102", "country": "US", "region": "OH", "city": "Cleveland", "postal": "44195", "accuracyKm": 10, "timeZone": "America/New_York", "org": "The Cleveland Clinic Foundation" }
+      }
+    },
+    {
+      "id": "v10", "name": "Student: MacBook Air M3 on a university network at 2 AM, from TikTok",
+      "targets": ["T1-04", "T1-16", "T1-29", "T1-31", "T1-32", "T1-36", "T2-H"],
+      "data": {
+        "S": { "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.1 Safari/605.1.15",
+               "isWin": false, "isMac": true, "pxr": 2, "sw": 1470, "sh": 956, "vw": 1470, "vh": 830, "ref": "https://www.tiktok.com/" },
+        "X": { "webgl": { "unmaskedRenderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M3, Unspecified Version)" } },
+        "B": { "visitTime": { "hour": 2, "minute": 20, "dayOfWeek": 4 } },
+        "N": { "status": "ok", "ip": "198.51.100.140", "country": "US", "region": "MA", "city": "Cambridge", "postal": "02139", "accuracyKm": 5, "timeZone": "America/New_York", "org": "Massachusetts Institute of Technology" }
+      }
+    },
+    {
+      "id": "v11", "name": "Low-memory Android (US carrier model) on public library Wi-Fi, weekday 3 PM",
+      "targets": ["T1-01", "T1-07", "T1-31", "T1-32", "T2-B"],
+      "data": {
+        "S": { "ua": "Mozilla/5.0 (Linux; Android 13; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Mobile Safari/537.36",
+               "isWin": false, "isAndroid": true, "isMobile": true, "touch": 5, "ram": 2, "pxr": 2, "sw": 360, "sh": 800, "vw": 360, "vh": 680 },
+        "X": { "clientHints": { "model": "SM-A035U", "platformVersion": "13.0.0" } },
+        "B": { "visitTime": { "hour": 15, "minute": 10, "dayOfWeek": 4 } },
+        "N": { "status": "ok", "ip": "203.0.113.150", "country": "US", "region": "NY", "city": "New York", "postal": "10018", "accuracyKm": 5, "timeZone": "America/New_York", "org": "The New York Public Library" }
+      }
+    },
+    {
+      "id": "v12", "name": "Servicemember: Android phone with data saver on a military network, Saturday evening",
+      "targets": ["T1-08", "T1-31", "T1-32", "T1-35", "T2-N"],
+      "data": {
+        "S": { "ua": "Mozilla/5.0 (Linux; Android 14; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Mobile Safari/537.36",
+               "isWin": false, "isAndroid": true, "isMobile": true, "touch": 5, "ram": 6, "pxr": 2.6, "sw": 412, "sh": 915, "vw": 412, "vh": 780,
+               "conn": { "type": "4g", "downlink": 3, "rtt": 120, "save": true } },
+        "B": { "visitTime": { "hour": 21, "minute": 0, "dayOfWeek": 6 } },
+        "N": { "status": "ok", "ip": "198.51.100.201", "country": "US", "region": "NC", "city": "Fayetteville", "postal": "28307", "accuracyKm": 20, "timeZone": "America/New_York", "org": "DoD Network Information Center" }
+      }
+    },
+    {
+      "id": "v13", "name": "Government worker: Windows 11, two monitors, Intel graphics, city network in Seattle, weekday 11 AM",
+      "targets": ["T1-03", "T1-09", "T1-15", "T1-31", "T1-32", "T2-J"],
+      "data": {
+        "S": { "tz": "America/Los_Angeles" },
         "X": { "clientHints": { "platformVersion": "15.0.0" }, "screen": { "isExtended": true },
-               "webgl": { "unmaskedRenderer": "ANGLE (Intel, Intel(R) UHD Graphics 620 (0x00005917) Direct3D11 vs_5_0 ps_5_0, D3D11)" } },
-        "B": { "visitTime": { "hour": 10, "minute": 25, "dayOfWeek": 1 } }
+               "webgl": { "unmaskedRenderer": "ANGLE (Intel, Intel(R) UHD Graphics 770 (0x00004680) Direct3D11 vs_5_0 ps_5_0, D3D11)" } },
+        "B": { "visitTime": { "hour": 11, "minute": 30, "dayOfWeek": 3 } },
+        "N": { "status": "ok", "ip": "203.0.113.170", "country": "US", "region": "WA", "city": "Seattle", "postal": "98104", "accuracyKm": 10, "timeZone": "America/Los_Angeles", "org": "City of Seattle" }
       }
     },
     {
-      "id": "p09", "name": "Windows high-contrast mode (forced colours) and increased contrast",
-      "targets": ["T1-24", "T2-E"],
-      "data": {
-        "X": { "clientHints": { "platformVersion": "15.0.0" }, "mediaPrefs": { "forcedColors": true, "contrast": "more" } }
-      }
-    },
-    {
-      "id": "p10", "name": "Mac with OpenDyslexic installed and reduced motion",
-      "targets": ["T1-24", "T1-25", "T2-E"],
-      "data": {
-        "S": { "isWin": false, "isMac": true, "pxr": 2, "reducedMotion": true },
-        "X": { "fontsExtended": { "found": ["OpenDyslexic", "Avenir Next"] } }
-      }
-    },
-    {
-      "id": "p11", "name": "Returning iPhone visitor: 3rd visit, from Instagram, copied text, left the tab twice",
-      "targets": ["T1-02", "T1-26", "T1-28", "T1-29", "T1-27"],
+      "id": "v14", "name": "iPhone on a school district network, weekday 10 AM, from Instagram (teen guard: no income reading)",
+      "targets": ["T1-02", "T1-15", "T1-29", "T1-31", "T1-32"],
       "data": {
         "S": { "ua": "Mozilla/5.0 (iPhone; CPU iPhone OS 18_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.1 Mobile/15E148 Safari/604.1",
-               "isWin": false, "isIOS": true, "isMobile": true, "pxr": 3, "sw": 393, "sh": 852, "vw": 393, "vh": 660, "ram": null,
-               "ref": "https://l.instagram.com/", "histLen": 7, "conn": null },
-        "X": { "webgl": { "unmaskedRenderer": "Apple GPU" } },
-        "B": { "copies": [ { "text": "Every item below was transmitted automatically. You authorized none of it.", "at": 41000 } ],
-               "tab": { "hiddenCount": 2, "awayMs": 95000 }, "sectionsMs": { "What your device broadcast the moment you arrived": 52000, "The surveillance that runs on every website you visit": 18000 } },
-        "cookies": { "vis": 3, "ga": "GA1.1.1849302771.1759500000" }
+               "isWin": false, "isIOS": true, "isMobile": true, "touch": 5, "pxr": 3, "sw": 393, "sh": 852, "vw": 393, "vh": 660, "tz": "America/Los_Angeles", "ref": "https://www.instagram.com/" },
+        "B": { "visitTime": { "hour": 10, "minute": 40, "dayOfWeek": 2 } },
+        "N": { "status": "ok", "ip": "198.51.100.210", "country": "US", "region": "CA", "city": "Los Angeles", "postal": "90017", "accuracyKm": 10, "timeZone": "America/Los_Angeles", "org": "Los Angeles Unified School District" }
       }
     },
     {
-      "id": "p12", "name": "Automated browser (headless Chrome, software renderer)",
-      "targets": ["T1-19"],
+      "id": "v15", "name": "Teacher: Windows 11 laptop on a school district network, weekday 1 PM, increased contrast and Atkinson Hyperlegible",
+      "targets": ["T1-15", "T1-24", "T1-25", "T1-31", "T1-32", "T2-E", "T2-J"],
       "data": {
-        "S": { "isWin": false, "isLinux": true, "ua": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/142.0.0.0 Safari/537.36" },
-        "X": { "webdriver": true, "webgl": { "unmaskedRenderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)" } }
+        "S": { "tz": "America/Los_Angeles" },
+        "X": { "clientHints": { "platformVersion": "15.0.0" }, "mediaPrefs": { "contrast": "more" }, "fontsExtended": { "found": ["Atkinson Hyperlegible"] } },
+        "B": { "visitTime": { "hour": 13, "minute": 15, "dayOfWeek": 4 } },
+        "N": { "status": "ok", "ip": "198.51.100.211", "country": "US", "region": "CA", "city": "Los Angeles", "postal": "90017", "accuracyKm": 10, "timeZone": "America/Los_Angeles", "org": "Los Angeles Unified School District" }
       }
     },
     {
-      "id": "p13", "name": "Windows 11 in the US Pacific zone, Chinese (China) first, Chinese voice pack",
-      "targets": ["T1-11", "T1-12", "T1-13", "T2-C"],
+      "id": "v16", "name": "MacBook Pro M3 Pro on hotel Wi-Fi in Los Angeles, clock still on Eastern time, Sunday",
+      "targets": ["T1-04", "T1-31", "T1-32", "T1-34", "T1-36", "T2-L"],
       "data": {
-        "S": { "lang": "zh-CN", "langs": ["zh-CN", "zh", "en"], "tz": "America/Los_Angeles" },
+        "S": { "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.1 Safari/605.1.15",
+               "isWin": false, "isMac": true, "pxr": 2, "sw": 1512, "sh": 982, "vw": 1512, "vh": 860 },
+        "X": { "webgl": { "unmaskedRenderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M3 Pro, Unspecified Version)" } },
+        "B": { "visitTime": { "hour": 18, "minute": 50, "dayOfWeek": 0 } },
+        "N": { "status": "ok", "ip": "203.0.113.190", "country": "US", "region": "CA", "city": "Los Angeles", "postal": "90071", "accuracyKm": 10, "timeZone": "America/Los_Angeles", "org": "Hilton Worldwide Holdings Inc." }
+      }
+    },
+    {
+      "id": "v17", "name": "Windows 11 PC, RTX 4070, Creative Cloud fonts, on Starlink in rural Kentucky (low-income ZIP)",
+      "targets": ["T1-03", "T1-17", "T1-31", "T1-32", "T2-J"],
+      "data": {
+        "S": { "fonts": ["Calibri", "Segoe UI"] },
+        "X": { "clientHints": { "platformVersion": "15.0.0" },
+               "webgl": { "unmaskedRenderer": "ANGLE (NVIDIA, NVIDIA GeForce RTX 4070 (0x00002786) Direct3D11 vs_5_0 ps_5_0, D3D11)" },
+               "fontsExtended": { "found": ["Trajan Pro", "Kozuka Gothic Pro"] } },
+        "B": { "visitTime": { "hour": 20, "minute": 40, "dayOfWeek": 1 } },
+        "N": { "status": "ok", "ip": "198.51.100.230", "country": "US", "region": "KY", "city": "Isom", "postal": "41858", "accuracyKm": 20, "timeZone": "America/New_York", "org": "Space Exploration Technologies Corporation" }
+      }
+    },
+    {
+      "id": "v18", "name": "Low-memory Android at 12% battery on AT&T home internet in Detroit (low-income ZIP), Thursday night",
+      "targets": ["T1-07", "T1-31", "T1-32", "T1-35", "T1-37", "T2-B", "T2-L"],
+      "data": {
+        "S": { "ua": "Mozilla/5.0 (Linux; Android 13; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Mobile Safari/537.36",
+               "isWin": false, "isAndroid": true, "isMobile": true, "touch": 5, "ram": 2, "pxr": 2, "sw": 360, "sh": 800, "vw": 360, "vh": 680,
+               "tz": "America/Detroit", "battery": { "level": 0.12, "charging": false } },
+        "B": { "visitTime": { "hour": 21, "minute": 25, "dayOfWeek": 4 } },
+        "N": { "status": "ok", "ip": "203.0.113.205", "country": "US", "region": "MI", "city": "Detroit", "postal": "48205", "accuracyKm": 5, "timeZone": "America/Detroit", "org": "AT&T Services, Inc." }
+      }
+    },
+    {
+      "id": "v19", "name": "iPhone set to Spanish (US) on Comcast home in Miami (Spanish-speaking, low-income ZIP), Sunday",
+      "targets": ["T1-02", "T1-11", "T1-31", "T1-32", "T2-C", "T2-L", "T2-M"],
+      "data": {
+        "S": { "ua": "Mozilla/5.0 (iPhone; CPU iPhone OS 18_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.1 Mobile/15E148 Safari/604.1",
+               "isWin": false, "isIOS": true, "isMobile": true, "touch": 5, "pxr": 3, "sw": 393, "sh": 852, "vw": 393, "vh": 660,
+               "lang": "es-US", "langs": ["es-US", "es"] },
+        "X": { "locale": { "locale": "es-US", "hourCycle": "h12" } },
+        "B": { "visitTime": { "hour": 18, "minute": 0, "dayOfWeek": 0 } },
+        "N": { "status": "ok", "ip": "198.51.100.19", "country": "US", "region": "FL", "city": "Miami", "postal": "33125", "accuracyKm": 5, "timeZone": "America/New_York", "org": "Comcast Cable Communications, LLC" }
+      }
+    },
+    {
+      "id": "v20", "name": "Windows 11 set to Chinese (China) first, Chinese voice pack, Verizon home in Flushing, Queens (Chinese-speaking ZIP)",
+      "targets": ["T1-11", "T1-12", "T1-13", "T1-31", "T1-32", "T2-C"],
+      "data": {
+        "S": { "lang": "zh-CN", "langs": ["zh-CN", "zh", "en-US", "en"] },
         "X": { "clientHints": { "platformVersion": "15.0.0" }, "locale": { "locale": "zh-CN", "hourCycle": "h23" },
-               "voicesList": [ { "name": "Microsoft Huihui", "lang": "zh-CN", "local": true }, { "name": "Microsoft Zira", "lang": "en-US", "local": true } ] }
+               "voicesList": [ { "name": "Microsoft Huihui", "lang": "zh-CN", "local": true }, { "name": "Microsoft Zira", "lang": "en-US", "local": true } ] },
+        "N": { "status": "ok", "ip": "203.0.113.35", "country": "US", "region": "NY", "city": "Flushing", "postal": "11355", "accuracyKm": 5, "timeZone": "America/New_York", "org": "Verizon Business" }
       }
     },
     {
-      "id": "p14", "name": "French-Canadian Mac in Toronto (language matches country)",
-      "targets": ["T1-11", "T1-10"],
+      "id": "v21", "name": "Korean traveler: Galaxy S24 (Korean model), Korean language, clock on Seoul time, hotel Wi-Fi in San Francisco",
+      "targets": ["T1-01", "T1-11", "T1-12", "T1-31", "T1-32", "T1-34", "T2-D", "T2-I", "T2-L"],
       "data": {
-        "S": { "isWin": false, "isMac": true, "pxr": 2, "tz": "America/Toronto", "lang": "fr-CA", "langs": ["fr-CA", "fr", "en-CA", "en"] },
-        "X": { "locale": { "locale": "fr-CA", "hourCycle": "h23" }, "webgl": { "unmaskedRenderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M2, Unspecified Version)" } }
+        "S": { "ua": "Mozilla/5.0 (Linux; Android 14; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Mobile Safari/537.36",
+               "isWin": false, "isAndroid": true, "isMobile": true, "touch": 5, "ram": 8, "pxr": 3, "sw": 384, "sh": 832, "vw": 384, "vh": 720,
+               "lang": "ko-KR", "langs": ["ko-KR", "ko", "en-US", "en"], "tz": "Asia/Seoul" },
+        "X": { "clientHints": { "model": "SM-S921N", "platformVersion": "14.0.0" }, "locale": { "locale": "ko-KR", "hourCycle": "h12" } },
+        "B": { "visitTime": { "hour": 9, "minute": 15, "dayOfWeek": 5 } },
+        "N": { "status": "ok", "ip": "203.0.113.66", "country": "US", "region": "CA", "city": "San Francisco", "postal": "94108", "accuracyKm": 10, "timeZone": "America/Los_Angeles", "org": "Marriott International" }
       }
     },
     {
-      "id": "p15", "name": "UK Samsung flagship (international model) in London",
-      "targets": ["T1-01", "T1-10"],
+      "id": "v22", "name": "iPhone in London: English (UK), BT home broadband (non-US control)",
+      "targets": ["T1-02", "T1-15", "T1-31", "T1-32"],
       "data": {
-        "S": { "isWin": false, "isAndroid": true, "isMobile": true, "ram": 8, "sw": 384, "sh": 832, "vw": 384, "vh": 720, "pxr": 3.75,
-               "tz": "Europe/London", "lang": "en-GB", "langs": ["en-GB", "en"] },
-        "X": { "clientHints": { "model": "SM-S921B", "platformVersion": "15.0.0" }, "locale": { "locale": "en-GB", "hourCycle": "h23" },
-               "mediaPrefs": { "colorGamut": "p3", "dynamicRange": "high" } }
+        "S": { "ua": "Mozilla/5.0 (iPhone; CPU iPhone OS 18_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.1 Mobile/15E148 Safari/604.1",
+               "isWin": false, "isIOS": true, "isMobile": true, "touch": 5, "pxr": 3, "sw": 393, "sh": 852, "vw": 393, "vh": 660,
+               "lang": "en-GB", "langs": ["en-GB", "en"], "tz": "Europe/London" },
+        "X": { "locale": { "locale": "en-GB", "hourCycle": "h23" } },
+        "B": { "visitTime": { "hour": 12, "minute": 30, "dayOfWeek": 6 } },
+        "N": { "status": "ok", "ip": "192.0.2.140", "country": "GB", "region": "ENG", "city": "London", "postal": "N1", "accuracyKm": 20, "timeZone": "Europe/London", "org": "British Telecommunications PLC" }
       }
     },
     {
-      "id": "p16", "name": "US Galaxy S24 Ultra (carrier model), HDR screen, Sunday, from Facebook",
-      "targets": ["T1-01", "T1-05", "T1-29"],
+      "id": "v23", "name": "French-Canadian Mac (M1) in Toronto on Rogers (language matches country)",
+      "targets": ["T1-04", "T1-11", "T1-31", "T1-32", "T1-36"],
       "data": {
-        "S": { "isWin": false, "isAndroid": true, "isMobile": true, "ram": 8, "sw": 384, "sh": 832, "vw": 384, "vh": 720, "pxr": 3.75, "ref": "https://l.facebook.com/" },
-        "X": { "clientHints": { "model": "SM-S928U", "platformVersion": "15.0.0" }, "mediaPrefs": { "colorGamut": "p3", "dynamicRange": "high" } },
-        "B": { "visitTime": { "hour": 15, "minute": 30, "dayOfWeek": 0 } }
+        "S": { "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.1 Safari/605.1.15",
+               "isWin": false, "isMac": true, "pxr": 2, "sw": 1440, "sh": 900, "vw": 1440, "vh": 790,
+               "lang": "fr-CA", "langs": ["fr-CA", "fr", "en-CA", "en"], "tz": "America/Toronto" },
+        "X": { "webgl": { "unmaskedRenderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M1, Unspecified Version)" }, "locale": { "locale": "fr-CA", "hourCycle": "h23" } },
+        "B": { "visitTime": { "hour": 17, "minute": 45, "dayOfWeek": 5 } },
+        "N": { "status": "ok", "ip": "192.0.2.163", "country": "CA", "region": "ON", "city": "Toronto", "postal": "M5V", "accuracyKm": 10, "timeZone": "America/Toronto", "org": "Rogers Communications Canada Inc." }
       }
     },
     {
-      "id": "p17", "name": "Do Not Track plus an ad blocker, nothing else hidden",
-      "targets": ["T1-20", "T1-23", "T2-F"],
+      "id": "v24", "name": "Firefox on Windows through NordVPN (exit in the Netherlands), Mountain clock, Do Not Track plus GPC",
+      "targets": ["T1-10", "T1-23", "T1-33", "T2-F"],
       "data": {
-        "S": { "dnt": "1", "adblock": true }
+        "S": { "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:133.0) Gecko/20100101 Firefox/133.0", "tz": "America/Denver", "dnt": "1" },
+        "X": { "gpc": true },
+        "N": { "status": "ok", "ip": "192.0.2.201", "country": "NL", "region": "NH", "city": "Amsterdam", "postal": "1012", "accuracyKm": 20, "timeZone": "Europe/Amsterdam", "org": "Tefincom S.A." }
       }
     },
     {
-      "id": "p18", "name": "Late night, low-memory Android without data saver",
-      "targets": ["T1-07", "T1-16"],
+      "id": "v25", "name": "iPhone with iCloud Private Relay and a Safari content blocker, Pacific clock, Saturday",
+      "targets": ["T1-02", "T1-10", "T1-20", "T1-33", "T2-F", "T2-M"],
       "data": {
-        "S": { "isWin": false, "isAndroid": true, "isMobile": true, "ram": 2, "sw": 360, "sh": 800, "vw": 360, "vh": 680, "pxr": 2, "tz": "America/Chicago" },
-        "X": { "clientHints": { "model": "moto g play - 2024", "platformVersion": "14.0.0" } },
-        "B": { "visitTime": { "hour": 2, "minute": 14, "dayOfWeek": 4 } }
+        "S": { "ua": "Mozilla/5.0 (iPhone; CPU iPhone OS 18_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.1 Mobile/15E148 Safari/604.1",
+               "isWin": false, "isIOS": true, "isMobile": true, "touch": 5, "pxr": 3, "sw": 430, "sh": 932, "vw": 430, "vh": 740, "tz": "America/Los_Angeles", "adblock": true },
+        "B": { "visitTime": { "hour": 11, "minute": 0, "dayOfWeek": 6 } },
+        "N": { "status": "ok", "ip": "198.51.100.172", "country": "US", "region": "CA", "city": "Los Angeles", "postal": "90009", "accuracyKm": 200, "timeZone": "America/Los_Angeles", "org": "Akamai Technologies, Inc." }
       }
     },
     {
-      "id": "p19", "name": "Plain default: Windows 11, English, Eastern, no extras",
-      "targets": ["T1-10", "T1-15", "T1-21", "T1-29"],
+      "id": "v26", "name": "Automated browser: headless Chrome, software renderer, running in an Amazon data center",
+      "targets": ["T1-10", "T1-19", "T1-21", "T1-33"],
       "data": {
-        "X": { "clientHints": { "platformVersion": "15.0.0" } }
+        "S": { "ua": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/142.0.0.0 Safari/537.36",
+               "isWin": false, "isLinux": true, "cores": 2, "ram": 4, "sw": 1280, "sh": 720, "vw": 1280, "vh": 720 },
+        "X": { "webgl": { "unmaskedRenderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)" }, "webdriver": true },
+        "B": { "visitTime": { "hour": 4, "minute": 0, "dayOfWeek": 1 } },
+        "N": { "status": "ok", "ip": "192.0.2.240", "country": "US", "region": "VA", "city": "Ashburn", "postal": "20149", "accuracyKm": 1000, "timeZone": "America/New_York", "org": "Amazon.com, Inc." }
       }
     },
     {
-      "id": "p20", "name": "SYNTHETIC conflict: spoofed signals that are both premium and low-budget",
-      "targets": ["T2-A", "T2-B", "conflict"],
+      "id": "v27", "name": "Windows high-contrast mode and reduced motion, English, Cox home in Phoenix (Spanish-speaking, low-income ZIP)",
+      "targets": ["T1-24", "T1-31", "T1-32", "T2-E"],
       "data": {
-        "S": { "isWin": false, "isAndroid": true, "isMobile": true, "ram": 2, "conn": { "type": "4g", "downlink": 1.5, "rtt": 200, "save": true } },
-        "X": { "clientHints": { "model": "SM-A055U" }, "mediaPrefs": { "colorGamut": "p3", "dynamicRange": "high" }, "fontsExtended": { "found": ["Acumin Pro"] } }
+        "S": { "tz": "America/Phoenix", "reducedMotion": true },
+        "X": { "clientHints": { "platformVersion": "15.0.0" }, "mediaPrefs": { "forcedColors": true } },
+        "N": { "status": "ok", "ip": "203.0.113.222", "country": "US", "region": "AZ", "city": "Phoenix", "postal": "85009", "accuracyKm": 5, "timeZone": "America/Phoenix", "org": "Cox Communications Inc." }
+      }
+    },
+    {
+      "id": "v28", "name": "Engaged reader: Mac (M3) with OpenDyslexic and reduced motion, from Reddit, copied text, left the tab, Comcast home in Chicago",
+      "targets": ["T1-04", "T1-24", "T1-25", "T1-27", "T1-28", "T1-29", "T1-31", "T1-32", "T1-36"],
+      "data": {
+        "S": { "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.1 Safari/605.1.15",
+               "isWin": false, "isMac": true, "pxr": 2, "sw": 1512, "sh": 982, "vw": 1512, "vh": 860, "tz": "America/Chicago",
+               "reducedMotion": true, "histLen": 6, "ref": "https://www.reddit.com/r/privacy/" },
+        "X": { "webgl": { "unmaskedRenderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M3, Unspecified Version)" }, "fontsExtended": { "found": ["OpenDyslexic"] } },
+        "B": { "visitTime": { "hour": 21, "minute": 10, "dayOfWeek": 1 },
+               "copies": [ { "text": "The unique combination of your graphics hardware, operating system and fonts produces a fingerprint ID" } ],
+               "tab": { "hiddenCount": 2, "awayMs": 95000 }, "sectionsMs": { "What your browser reveals": 48000, "Cookies": 12000 }, "mouse": { "moves": 340 } },
+        "N": { "status": "ok", "ip": "198.51.100.88", "country": "US", "region": "IL", "city": "Chicago", "postal": "60614", "accuracyKm": 5, "timeZone": "America/Chicago", "org": "Comcast Cable Communications, LLC" }
+      }
+    },
+    {
+      "id": "v29", "name": "Office worker: Windows 11 set to Portuguese (Brazil) first, Portuguese keyboard, company network in Seattle, weekday 2 PM",
+      "targets": ["T1-11", "T1-12", "T1-15", "T1-30", "T1-31", "T1-32", "T2-C", "T2-G", "T2-O"],
+      "data": {
+        "S": { "lang": "pt-BR", "langs": ["pt-BR", "pt", "en-US", "en"], "tz": "America/Los_Angeles" },
+        "X": { "clientHints": { "platformVersion": "15.0.0" }, "locale": { "locale": "pt-BR", "hourCycle": "h23" },
+               "keyboardLayout": { "KeyQ": "q", "KeyY": "y", "KeyA": "a", "Semicolon": "ç" } },
+        "B": { "visitTime": { "hour": 14, "minute": 20, "dayOfWeek": 3 } },
+        "N": { "status": "ok", "ip": "203.0.113.240", "country": "US", "region": "WA", "city": "Seattle", "postal": "98121", "accuracyKm": 10, "timeZone": "America/Los_Angeles", "org": "Puget Seafood Processing" }
+      }
+    },
+    {
+      "id": "v30", "name": "Android tablet on a prison tablet provider's network at 1 AM",
+      "targets": ["T1-16", "T1-31", "T1-32", "T1-35"],
+      "data": {
+        "S": { "ua": "Mozilla/5.0 (Linux; Android 11; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36",
+               "isWin": false, "isAndroid": true, "isMobile": true, "touch": 5, "ram": 3, "pxr": 1.5, "sw": 800, "sh": 1280, "vw": 800, "vh": 1200, "tz": "America/Chicago" },
+        "B": { "visitTime": { "hour": 1, "minute": 5, "dayOfWeek": 2 } },
+        "N": { "status": "ok", "ip": "198.51.100.250", "country": "US", "region": "TX", "city": "Dallas", "postal": "75201", "accuracyKm": 50, "timeZone": "America/Chicago", "org": "Securus Technologies, LLC" }
       }
     }
   ]

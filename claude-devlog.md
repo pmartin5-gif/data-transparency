@@ -916,3 +916,115 @@ A record of each instruction exchange. Newest entries at the bottom.
 - `CLAUDE.md` → Project rules: added the milestone-only README rule
 
 **Verdict:** Fulfilled. ("yes")
+
+## 041 · New test visitors
+**Date:** 2026-11-26
+
+**Instruction:** Reconfigure the testing. Keep the profile-based approach from last time, but create brand-new test profiles instead of reusing the old ones.
+
+**Interpretations:**
+1. Replace `tests/personas.json` with a new set built from scratch for the current engine (T1-01 to T1-37 without T1-14/T1-26; T2-A to T2-O without T2-K). Every visitor gets IP data (`N`); US visitors get real ZIP codes so the runner can supply area data (`Z`) from `data/`. No Google Analytics fields. Targets per visitor. Runner updated to supply `Z` and an up-to-date rule list. Tests not run; old visitors replaced (kept in git). Open questions: other testing criteria? Backstories? How many?
+   - *Answers:* no other criteria for now; no backstories; 30 visitors.
+
+**Confirmed intent:** Interpretation 1 with 30 signal-bundle visitors (no backstories), judged only by which rules fire.
+
+**Executed:**
+- `tests/personas.json`: 30 new visitors (v01–v30), every rule and conclusion targeted at least once. IPs from documentation ranges; real ZIPs chosen from `data/` to meet the area thresholds (high income 94301/07030, low income 48205/41858/33125/85009/11355, below median 80302/90022, Spanish 90022/33125, Chinese 11355); GPC states CA, NJ, CO.
+- `tests/run-personas.js`: loads `data/` and passes it as `Z` for US connections; coverage list updated.
+- Not run.
+
+**Verdict:** Fulfilled. ("Yes")
+
+## 042 · First run of the new test visitors
+**Date:** 2026-11-26
+
+**Instruction:** Run the new test and update `CLAUDE.md` to match.
+
+**Interpretations:**
+1. Run `node tests/run-personas.js` (overwrites `tests/results.md`) and report never-fired rules, missed targets and unexpected firings, without fixing anything. In `CLAUDE.md` → "Next up", replace the old step 3 with: new set done (041), run, next is reviewing results; front-end pass stays after.
+   - *Confirmed.*
+
+**Confirmed intent:** Interpretation 1.
+
+**Executed:**
+- Ran the tests: 30 visitors, every rule fired at least once, all targets hit.
+- Untargeted firings: v07 T2-O (Deutsche Telekom unrecognized as a provider, so a Berlin home connection is treated as an employer network; T1-31 also falls back to country only); v19 T2-J area path (iPhone in low-income ZIP 33125, consistent with the rule); v26 T1-16 (4 AM visit, expected).
+- `CLAUDE.md` → Next up: step 3 marked done, with "review `tests/results.md`" as the current step and the two flags above.
+
+**Verdict:** Fulfilled. ("Yes and yes")
+
+## 043 · Conclusions US only; premium iPhones only
+**Date:** 2026-11-26
+
+**Instruction:** (Responding to the run in 042.) v07: we only want to target audiences currently in the US; asked whether a person in the US on Deutsche Telekom is possible. v19: an iPhone on its own doesn't indicate wealth, but premium iPhones do (Max, Pro, Air, "Duo").
+
+**Interpretations:**
+1. Answered: a person in the US shows up on Deutsche Telekom only when roaming on a German SIM, and the IP then says Germany (T-Mobile USA is already a US carrier); premium iPhones can be told apart only by screen sizes no other model shares; "Duo" is unknown. Proposed: (a) conclusions fire only for visitors in the US, facts still show; (b) an iPhone counts as premium (income sentence, feeds T2-A/T2-J) only on a premium-only screen size, verified first; (c) record in `inference-map.md`; tests not rerun. Open: Tier 2 only or no profile outside the US? Keep the advertiser and lending lines for every iPhone? Separate option: a roaming rule.
+   - *User:* "This all sounds good." Open points taken at the narrowest reading: Tier 2 only; advertiser and lending lines stay for every iPhone.
+
+**Confirmed intent:** Interpretation 1.
+
+**Executed:**
+- Verified sizes (useyourloaf.com, "iPhone 17 Screen Sizes"; yesviz.com): premium-only at @3x are 440×956 (16/17 Pro Max) and 420×912 (Air). 402×874 is shared by the 17 Pro and base 17, so it doesn't count. Older Pro-only sizes (e.g. 414×896 @3x, XS Max/11 Pro Max) left out as dated.
+- `index.html` T1-02: premium-size check; names the matching model; income sentence and `premium` flag only for those sizes. Advertiser and lending sentences unchanged.
+- `index.html` assembly: all Tier 2 conclusions suppressed when not in the US (`isUS`: connection country, else clock).
+- `inference-map.md`: T1-02 entry and an implementation note (devlog 043).
+- Checks: engine compiles. Tests not rerun.
+
+**Verdict:** Fulfilled. ("Yes and yes")
+
+## 044 · Rerun after devlog 043
+**Date:** 2026-11-26
+
+**Instruction:** Rerun the tests; the user will then review the results.
+
+**Interpretations:**
+1. Run `node tests/run-personas.js` (overwrites `tests/results.md`); report targets, coverage and the v05/v07/v19 changes. No fixes, no `CLAUDE.md` edit.
+   - *Confirmed.*
+
+**Confirmed intent:** Interpretation 1.
+
+**Executed:**
+- Ran the tests: 30 visitors; runner reports every rule fired and all targets hit.
+- Changes as expected: v05 T2-F and v07 T2-O suppressed (outside the US); v19 no longer gets T2-J; plain iPhones (v19, v25) show no income sentence.
+- Noted for the user: the runner counts a suppressed conclusion as fired, so v05's T2-F target reads as hit; no visitor has a premium-iPhone screen size, so that path is untested.
+
+**Verdict:** Fulfilled. ("yes")
+
+## 045 · Engine edits from the user's review of the test results
+**Date:** 2026-11-26
+
+**Instruction:** (Pasted review notes, visitor by visitor; changes go to the engine.) General: say "[sites] can collect this without asking" only once; shorter paragraphs. V01: Orbitz typo; can we say the ISP *does* match the address, or sells it?; date Sephora's fine; drop "or leave them out"; drop the ad-auction sentence; drop "These are Census figures…" and the broker 30–46% sentence. V02: high-end GPU → "indicating disposable income and a higher socioeconomic bracket". V03: drop the Pew 61%/8% sentence. V13: replace the White House sentence with the user's wording. V18: drop Uber's denial. V19: drop the Facebook ethnicity and impersonation-scam sentences; drop T2-L's "None of this means…".
+
+**Interpretations:**
+1. Answered: "does match" is accurate; "sells" needs per-provider sourcing (FTC 2021 ISP report; FCC 2024 fines). Each note mapped to its rule, engine-wide. Flags: Orbitz rewrite drops the targeting fact; area sentence shared by T2-A and T2-B; V13 wording unsourced; V18 removal may imply Uber does. Questions: Orbitz wording; V13 source; include "any site can read this" lines as repeats; paragraph cap.
+   - *User:* include "does match"; add an FCC sentence on selling location data; Orbitz: "Mac users spend up to 30% more on hotels"; V13 needs no source (known personally); V18 fine as is; the "any site can read" lines are repeats too; cap paragraphs at 3–4 sentences and split separate subjects.
+2. Folded in. Flag: the FCC's 2024 fines went to the wireless carriers (AT&T, Sprint, T-Mobile, Verizon), not Comcast; proposed "In 2024, the FCC fined the major US wireless carriers nearly $200 million for selling customers' location data." on home and mobile statements.
+   - *User:* "use yours."
+
+**Confirmed intent:** Interpretation 2 with Claude's FCC wording.
+
+**Executed:**
+- `index.html` engine: all wording changes and removals above; FCC sentence (`ENG_FCC`) on T1-32 home and mobile.
+- Repeats: the "sites can see this" clause in T1-01, T1-03, T1-11, T1-24, T1-28, T1-31, T1-32 (other) and T1-37 marked `⟦full|short⟧`; first in reading order keeps it.
+- Paragraphs: grouped by subject (place split into network and language; conclusion facts and conclusion separate); at most four sentences; longer statements split evenly.
+- `inference-map.md`: implementation note, assembly rule 12 (paragraphs), V13 sentence added to rule 11's exceptions.
+- Checks: engine compiles; throwaway run in memory over the 30 visitors (no `results.md` written): no leftover markers, the "without asking" idea at most once, no paragraph over four sentences. Tests not rerun.
+
+**Verdict:** Fulfilled. ("Yes")
+
+## 046 · Learnings: don't soften statements
+**Date:** 2026-11-26
+
+**Instruction:** Add the suggested Learnings entry to `CLAUDE.md`.
+
+**Interpretations:**
+1. Proposed after 045: "Don't add disclaimers or hedges that soften a statement's impact; state the documented fact and stop."
+   - *User:* "Yes please add that, that's good."
+
+**Confirmed intent:** Interpretation 1.
+
+**Executed:**
+- `CLAUDE.md` → Learnings: new entry "Don't soften statements", citing the four removals in 045, with a note that saying when something is a likelihood still applies (`inference-map.md` standard).
+
+**Verdict:** Fulfilled. ("Yes please add that, that's good.")

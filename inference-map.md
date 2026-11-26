@@ -114,6 +114,7 @@ Each rule: **trigger** (signals) → **statement** (draft wording, as it might r
 - Trigger: `S.isIOS` (phone screen)
 - "You're on an iPhone. In the US, owning an iPhone was the single best predictor of high household income in 2016: it identified high earners correctly 69% of the time."
 - Source: ✓ Bertrand & Kamenica, "Coming Apart?", *AEJ: Applied* 2023 (NBER WP 24771), via Chicago Booth Review (A-01)
+- **Premium models only (Built, devlog 043):** the income sentence and the premium flag need a screen size only premium iPhones have (Pro Max 440×956, Air 420×912, at @3x). A plain iPhone gets the fact and the targeting sentences only
 - **Guard (Built, devlog 028, A-15):** 88% of US teens own an iPhone (Piper Sandler, spring 2025 ✓). No income reading from an iPhone on a school network or during school hours; the iPhone fact itself still shows
 - **Targeting (Built, devlog 028):** "Advertisers pay more to show you an ad than they would for an Android user." ✓ Appodeal eCPM report (M-02; no multiplier until a figure is checked)
 - **Targeting (Built, devlog 035, German wording by the user's decision):** "In a German lending study, iPhone users repaid more reliably than Android users: the gap was about as large as the one between an average credit score and a top-fifth one." ✓ Berg et al., *RFS* 2020 (A-02). No US equivalent found. Withheld by the teen guard
@@ -493,7 +494,8 @@ The threshold is counted in **independent evidence groups**, not individual rule
 8. **Display:** confidence and sources are hidden in the main text; sources may go in a list at the bottom of the page (later).
 9. **Area data is never shown alone** (devlog 018). It appears only inside a conclusion about the person.
 10. **Targeting and risk statements follow their fact** (devlog 026). At most [2] per rule (revisit after testing, devlog 037; exceptions allowed by the user in devlog 035: T2-B with Epsilon, Spanish T2-C with M-05, T1-27 with Parkinson's; three each), in the paragraph after the observation they depend on. Optional ones are dropped first when a profile gets long.
-11. **Unsourced items don't ship:** anything marked ✗ source needed, or US source needed, stays out of the build until a working source is found. **Exceptions by the user's decision:** T1-37's Uber sentence (A-40, devlog 034; now ~ sourced); the German lending study (A-02) ships with "German" in the wording (devlog 035); T2-J's area-path advertiser sentence and T1-03's high-end tier (devlog 037).
+11. **Unsourced items don't ship:** anything marked ✗ source needed, or US source needed, stays out of the build until a working source is found. **Exceptions by the user's decision:** T1-37's Uber sentence (A-40, devlog 034; now ~ sourced); the German lending study (A-02) ships with "German" in the wording (devlog 035); T2-J's area-path advertiser sentence and T1-03's high-end tier (devlog 037); T1-32's government sentence on lobbyists, in the user's wording (devlog 045).
+12. **Paragraphs (devlog 045):** one subject per paragraph, at most four sentences; a conclusion's facts and the conclusion are separate paragraphs. The "sites can see this without asking" idea is said once per profile.
 
 ## Implementation notes (devlog 010)
 
@@ -523,6 +525,14 @@ Tier 1, Tier 2 and assembly are now built into `index.html` (between the `INFERE
   - T2-O's "distinctive" = an Android model number or a non-English browser language
   - T2-F gets the DNT sentence through T1-23, which it absorbs
   - Not run: tests (p05/p06 and IP data still to update; no test visitors for the new rules yet). Syntax check only
+- **Devlog 045 (the user's review of the test results):**
+  - **Wording:** T1-36 now "Orbitz has found that Mac users spend up to 30% more on hotels." T1-32 home: "[provider] matches that address to the account holder", plus the FCC sentence (2024 fines on the major US wireless carriers, nearly $200 million, for selling customers' location data), also on the mobile statement. T1-32 government: the A-10 White House sentence replaced with the user's: lobbyists routinely target ads at government workers, down to a street address, individuals, and their friends and families (unsourced, the user's exception to rule 11). T1-23: Sephora's fine dated 2022. T1-03 high-end tier: "which suggests disposable income and a higher socioeconomic bracket"
+  - **Removed:** M-01 (ad-auction sentence) from T1-31; "or leave them out" from M-03; "These are Census figures… can't know your own" from the area sentence (T2-A and T2-B); the Pew 30–46% sentence from T2-A (still in T2-M); A-24 and A-23 from T2-C; B-20 from T2-D; T2-L's "None of this means…" disclaimer; T1-37's Uber denial
+  - **Said once:** the "sites can see this without asking" clause in T1-01, T1-03, T1-11, T1-24, T1-28, T1-31, T1-32 (unrecognized organization) and T1-37 is written as `⟦full|short⟧`; the first in reading order keeps the full wording, later ones the short
+  - **Paragraphs:** grouped by subject (device, software, network, language, time, history, privacy, accessibility; each conclusion's supporting facts, then the conclusion), at most four sentences each; a longer statement splits into near-equal parts
+- **Devlog 043 (after the first run of the new test visitors):**
+  - **Conclusions are US only.** Every Tier 2 conclusion is suppressed when the visitor isn't in the US (connection country when known, else the clock). Tier 1 facts still show. Prompted by v07: Deutsche Telekom, unknown to the US provider table, was read as an employer network and fired T2-O
+  - **T1-02: an iPhone alone is not premium.** The income sentence (A-01) and the `premium` flag (feeds T2-A, T2-J area path) now need a premium-only screen size at @3x: 440×956 (iPhone 16/17 Pro Max) or 420×912 (iPhone Air). Sizes shared with non-premium models (e.g. 402×874: 17 Pro and base 17) don't count. Source: useyourloaf.com, "iPhone 17 Screen Sizes". The statement names the matching model. The advertiser sentence (M-02) and the German lending sentence (A-02, teen-guarded) still show for every iPhone. Prompted by v19 (T2-J fired for a plain iPhone)
 - **Devlog 037 (decision backlog):**
   - T1-31: "in [state]" when no city is known; the M-03 tier sentence is removed when T2-M shows the tier (said once)
   - T1-03 high-end GPU tier (`ENG_GPU_HIGH`), feeding T2-A; price placeholders removed from T1-03, T1-04, T1-17

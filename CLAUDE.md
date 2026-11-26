@@ -26,11 +26,8 @@ Start here when resuming. First read `PRODUCT.md`, `inference-map.md` (incl. "Im
 **Next, in order (set 2026-11-26):**
 1. ✓ **Bundle the ZIP datasets and the state GPC list** (devlog 030), then finish the engine (devlogs 031–037): area rules wired in, Planned items built, the user's review list and decision backlog cleared. Census ACS by ZIP and the GPC list in `data/` (see `data/README.md`).
 2. ✓ **User's review list** (devlogs 035, 037).
-3. **Now: update and run the test visitors** (`tests/`):
-   - p05/p06: fix after the GA removal
-   - add IP data (`N`) and area data (`Z`, from `data/`) to the test visitors; the runner will need to supply `Z`
-   - add visitors for the new rules (devlogs 028–037)
-   - T1-26 was removed (session cookies): drop it from expected results
+3. ✓ **New test visitors, run** (devlogs 041–042): 30 new visitors (v01–v30) replace the old set; the runner supplies area data (`Z`). First run: every rule fired, all targets hit.
+   - **Now: review `tests/results.md`.** Flagged so far: v07 (Deutsche Telekom isn't recognized as a provider, so T2-O treats a home connection as an employer); v19 (T2-J area path fired for an iPhone in a low-income ZIP; consistent with the rule, untargeted).
 4. **Then: the front-end pass** (`PRODUCT.md` → "Front-end pass"), including reflecting IP data on the page (region and continent arrive as codes).
 
 ## Project rules
@@ -52,4 +49,5 @@ Distilled from `claude-devlog.md`. Add or revise an entry only when a pattern em
 - **Keep `PRODUCT.md` entries brief.** The user asked for a condensed synopsis instead of a full overview (005). Record conclusions and decisions in a line or two; detailed reasoning stays in conversation or the devlog.
 - **Group by feature in `PRODUCT.md`.** Keep a feature's findings, constraints, open questions and fix-later notes together in one item, not split across sections by type (007).
 - **Capture deferred items in `PRODUCT.md`.** When an exchange leaves something unresolved or explicitly for later, the user asks for a note so it isn't lost (004, 006, 012). Include that note in the interpretation by default.
+- **Don't soften statements.** The user removed four hedges and disclaimers in one review (045): "this page can't know your own", "none of this means… charging you more", Uber's denial, the broker-inaccuracy line. Don't add disclaimers or hedges that soften a statement's impact; state the documented fact and stop. (Saying when something is a likelihood still applies.)
 - **Don't run or edit tests unless asked.** Twice the user held off test runs while reviewing results (011, 013). Mention when a run would help; don't include it in the interpretation by default.
