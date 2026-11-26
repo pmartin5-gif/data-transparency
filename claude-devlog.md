@@ -1044,3 +1044,19 @@ A record of each instruction exchange. Newest entries at the bottom.
 - `CLAUDE.md` → Next up: step 3 "Testing complete"; step 4 "Now: the front-end pass". Added a note that `tests/results.md` predates the 045 wording.
 
 **Verdict:** Fulfilled. ("yes")
+
+## 048 · Publish to GitHub Pages
+**Date:** 2026-11-26
+
+**Instruction:** Publish a publicly accessible link on GitHub so the page can be tested from multiple devices by URL.
+
+**Interpretations:**
+1. GitHub Pages was already on (public repo, `main` / root): https://pmartin5-gif.github.io/data-transparency/. Local `main` was two commits ahead of GitHub, so the live site ran the older engine. Proposed: commit the remaining `CLAUDE.md` and devlog edits, then push `main`. Flagged per the project rules: GitHub logs visitor IPs; country.is is meant for development and GitHub Pages can't host the planned server function; ~9 MB area data still to revisit; the whole repo is public.
+   - *Confirmed.*
+
+**Confirmed intent:** Interpretation 1.
+
+**Executed:**
+- Committed `CLAUDE.md` and `claude-devlog.md`; pushed `main` to `origin`.
+
+**Verdict:** (pending)
