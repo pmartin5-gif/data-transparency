@@ -861,3 +861,21 @@ A record of each instruction exchange. Newest entries at the bottom.
 - Checks: `node --check`; throwaway engine run in the scratchpad. Tests not edited or run
 
 **Verdict:** Fulfilled. ("Yes")
+
+---
+
+## 038 · Next up: moving on to testing
+**Date:** 2026-11-26
+
+**Instruction:** (After the user committed.) Update the Next up list to reflect that we're moving on to testing.
+
+**Interpretations:**
+1. `CLAUDE.md` → "Next up": datasets ✓ with the engine work (devlogs 030–037); review list ✓; test visitors as the current step, spelled out (p05/p06, IP and area data, new visitors, T1-26 removed); IP reflection moved into a front-end pass step; date updated. Nothing else changes.
+   - *Confirmed.*
+
+**Confirmed intent:** Interpretation 1.
+
+**Executed:**
+- `CLAUDE.md`: "Next, in order (set 2026-11-26)" rewritten as above
+
+**Verdict:** Fulfilled. ("Yes")

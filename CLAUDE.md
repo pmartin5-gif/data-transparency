@@ -23,11 +23,15 @@ Start here when resuming. First read `PRODUCT.md`, `inference-map.md` (incl. "Im
 2. ✓ **Feed it into the inference engine** (devlogs 017–018): IP rules T1-31 to T1-34, new Tier 2 conclusions T2-G to T2-I; others marked Planned in `inference-map.md`.
 3. ✓ **Deep research step** (devlogs 019–028): Passes A–D and a source check in `research-plan.md` §9; folded into `inference-map.md`; reliable, buildable items built into `index.html`.
 
-**Next, in order (set 2026-11-25):**
-1. **Bundle the ZIP datasets and the state GPC list** (`inference-map.md` Part 5): Census ACS or IRS income by ZIP, and the states that require honoring Global Privacy Control. Unlocks the income band (T2-A), Google Ads tier (M-03), provider deals (B-01), location pricing (A-04), the GPC sentence (T1-23), and the remaining parts of T2-L and T2-M.
-2. **Update and run the test visitors:** p05/p06 after the GA removal, add IP data, add visitors for the new rules (devlog 028).
-3. **User's review list:** `PRODUCT.md` → "Review before building" (decisions and missing sources).
-4. **Still to do from step 1:** reflect IP data back on the page (region and continent arrive as codes).
+**Next, in order (set 2026-11-26):**
+1. ✓ **Bundle the ZIP datasets and the state GPC list** (devlog 030), then finish the engine (devlogs 031–037): area rules wired in, Planned items built, the user's review list and decision backlog cleared. Census ACS by ZIP and the GPC list in `data/` (see `data/README.md`).
+2. ✓ **User's review list** (devlogs 035, 037).
+3. **Now: update and run the test visitors** (`tests/`):
+   - p05/p06: fix after the GA removal
+   - add IP data (`N`) and area data (`Z`, from `data/`) to the test visitors; the runner will need to supply `Z`
+   - add visitors for the new rules (devlogs 028–037)
+   - T1-26 was removed (session cookies): drop it from expected results
+4. **Then: the front-end pass** (`PRODUCT.md` → "Front-end pass"), including reflecting IP data on the page (region and continent arrive as codes).
 
 ## Project rules
 
