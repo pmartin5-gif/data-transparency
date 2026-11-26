@@ -32,13 +32,28 @@ Loose notes on where this could go.
     - "…Your phone's model number marks it as an international version, not one sold by US carriers. This suggests you've immigrated from Mexico to the US in the last 4 years and makes you a target for groups persecuting immigrants."
     - _Flag for research:_ "in the last 4 years" has no supporting signal yet, and the same signals also fit a visitor, a relative's phone or a device bought abroad. Research should support claims like this or reshape them.
   - **Guiding principles (devlog 018):** aim for "how did it know that?" about the person. Common knowledge (sunset) and area facts (ZIP statistics) are never statements on their own; area data only feeds conclusions about the person (income band, rent, home ownership, likely industry). Network type and employer are high-value. "In the last 4 years" could rest on the 2–4 year phone replacement cycle (to verify). Full detail in `inference-map.md`.
+- **Bundled datasets (devlogs 030, 037):** Census ACS 2020–2024 by ZIP (income, rent, home ownership, language at home, industry, earnings by industry) and the 11 states requiring GPC, in `data/`; wired into the engine (devlogs 032, 037). IRS income skipped, so the Google Ads tier sentence (M-03) rests on Census income. Maryland was removed from the GPC list after reading its act (honoring the signal is optional there); New Jersey's date confirmed.
+  - **Decided (devlog 037): serve the page, don't embed the data.** Browsers block the `data/` fetches when `index.html` is opened from disk (`file://`), so preview it served (e.g. `python3 -m http.server`). **Before going live:** revisit this when finalizing (page weight for US visitors is now ~9 MB of data; consider trimming or lazy loading).
 - **Minors (devlog 021):** the page doesn't collect or reflect anything that singles out visitors under 18. **To show visitors:** that this was an option and we chose not to take it, plus what data could be collected about minors and how it's used (Pass A examples in `research-plan.md`: Google estimating age from activity, A-18; 88% of teens owning iPhones, A-15; telling a child from an adult by taps alone, declined). Still allowed: stating a school-district network, and flagging a likely teen only to withhold income readings (A-15).
-- **Review before building (devlog 027):** the user reviews these items in `inference-map.md` before any are built.
-  - **⚑ Needs decision:** school networks in the industry conclusion (T2-J); all the immigration wording (T2-D); the marketers' Hispanic segments (M-05 under T2-C); the Parkinson's capability sentence (T1-27); reproductive health as explanatory content only (R-04)
-  - **✗ Source needed:** lobbying audiences (A-10); the Uber battery finding (A-40, T1-37); Epsilon (R-06); Staples' figures (A-04); fiber income (B-04); the hospital night-shift base rate (T2-K)
-  - **US source needed:** the lending-study sentences (A-02, on T1-02, T1-16, T1-29 and T1-35)
+- **Decision backlog cleared (devlog 037):** dropped T2-K, device age and the ad-click lending sentence; narrowed T2-E to low vision; added a high-end GPU tier; built T2-J's area path; Google Ads tier said once; "in [state]" for networks with no city.
+- **Review before building (devlog 027) · Resolved in devlog 035.** Built: school networks in T2-J, the T2-D Spanish-dominance and ICE sentences, M-05, the Parkinson's sentence, Epsilon, the German lending study (in German wording), the lobbying sentence (reworded to a White House source). Still open:
+  - **Dropped (devlog 037):** T2-K (no source); the ad-click lending sentence. **Declined:** T2-D's "immigrated in the last N years" timeframe
+  - **Reproductive health (R-04):** add to Part Three later as explanatory content
+  - **Three targeting sentences allowed for now** on T2-B, Spanish T2-C and T1-27; revisit if profiles run long
+- **Revisit after testing (devlog 037):** the caps in `inference-map.md` Part 4 (at most 2 Weak statements per visitor; at most 2 targeting sentences per rule, with the three exceptions)
 - **Cookies are memory, not sensing.** The page can only read its own cookies, not other sites'. Their value is memory across visits: visit history, first/last seen and earlier behavior. All of it can be shown back in real time, but only on the same browser.
-  - **Revisit:** the page's own cookies keep data beyond a single session (persistent ID and visit counter 365 days, referrer 30 days), while the local recorders don't (see `CLAUDE.md` project rules). Decide whether the cookies should follow the same rule; the cookie demonstration in Part Two and the visit count in the profile depend on them.
+  - **Resolved (devlog 037):** the page's four cookies are now session cookies (deleted when the browser closes), following the same single-session rule as the local recorders. Removed: the return-visits statement (T1-26) and the simulated GA session count and first-visit event. The Part Two cookie cards and the event log were corrected so they don't claim persistence; the cards explain what a commercial site's version would keep.
+
+### Front-end pass (after the engine; decided in devlog 037)
+Deferred until the engine is configured and tested:
+- **Minors explainer** (priority): what could be collected about minors and that we chose not to (see "Minors" above)
+- **Part Three content pass,** including reproductive health (R-04) as explanatory content
+- **Reflect IP data on the page** (raw IP, region, continent, provider; codes like "NY" and "NA" spelled out)
+- **Profile order** (`inference-map.md` Part 4, item 5)
+- **Simulated tracking:** GA and Meta panels presenting simulated data as real; real vs. generic data; showing account linkage (see "Simulated third-party tracking")
+- **Canvas fingerprint:** placeholder bar values, browser-specific incognito claim, raw-pixel hashing
+- **Tone, structure and the "increase impact" review**
+- **Hosting** (switch the IP lookup to a server function at the host): parked until hosting is on the table
 
 ### Showing it with impact
 - Find impactful ways to present what we've learned back to the user

@@ -1,0 +1,14 @@
+{
+  "_about": "US states whose privacy law requires covered businesses to honor a universal opt-out signal such as Global Privacy Control (GPC). 'requiredFrom' = date the signal requirement applies. 'gpcNamed' = the state's regulator has said explicitly that GPC counts (GPC FAQ, Jan 2025). Compiled 2026-11-26; Maryland removed and New Jersey confirmed in devlog 037; see data/README.md for sources and open checks.",
+  "CA": { "state": "California",    "law": "California Consumer Privacy Act (CCPA) and regulations, 11 CCR §7025", "requiredFrom": "2023-01-01", "gpcNamed": true },
+  "CO": { "state": "Colorado",      "law": "Colorado Privacy Act",                         "requiredFrom": "2024-07-01", "gpcNamed": true },
+  "CT": { "state": "Connecticut",   "law": "Connecticut Data Privacy Act",                 "requiredFrom": "2025-01-01", "gpcNamed": true },
+  "TX": { "state": "Texas",         "law": "Texas Data Privacy and Security Act",          "requiredFrom": "2025-01-01", "gpcNamed": false },
+  "MT": { "state": "Montana",       "law": "Montana Consumer Data Privacy Act",            "requiredFrom": "2025-01-01", "gpcNamed": false },
+  "NH": { "state": "New Hampshire", "law": "New Hampshire Privacy Act (RSA 507-H)",        "requiredFrom": "2025-01-01", "gpcNamed": false },
+  "NE": { "state": "Nebraska",      "law": "Nebraska Data Privacy Act",                    "requiredFrom": "2025-01-01", "gpcNamed": false },
+  "NJ": { "state": "New Jersey",    "law": "New Jersey Data Privacy Act",                  "requiredFrom": "2025-07-15", "gpcNamed": true },
+  "MN": { "state": "Minnesota",     "law": "Minnesota Consumer Data Privacy Act",          "requiredFrom": "2025-07-31", "gpcNamed": false },
+  "OR": { "state": "Oregon",        "law": "Oregon Consumer Privacy Act",                  "requiredFrom": "2026-01-01", "gpcNamed": false },
+  "DE": { "state": "Delaware",      "law": "Delaware Personal Data Privacy Act",           "requiredFrom": "2026-01-01", "gpcNamed": false }
+}

@@ -691,3 +691,173 @@ A record of each instruction exchange. Newest entries at the bottom.
 - `research-plan.md`: status line "Complete (devlogs 020–028)"
 
 **Verdict:** Fulfilled. ("Yes")
+
+---
+
+## 030 · ZIP datasets and state GPC list bundled
+**Date:** 2026-11-26
+
+**Instruction:** Pick up where we left off (Next up step 1: bundle the ZIP datasets and the state GPC list).
+
+**Interpretations:**
+1. Download public data into a new `data/` folder as compact local JSON, not wired into the engine: Census ACS by ZIP (income, rent, home ownership), IRS income by ZIP, the GPC state list; a README with sources; mark bundled in `inference-map.md` Part 5 and add a `PRODUCT.md` note. Asked: add language and industry to the ACS file? ACS and IRS, or ACS only?
+   - *Answers:* add language and industry now; Census data is fine (skip IRS).
+2. ACS 2020–2024 5-year by ZCTA in three files (income/housing; language at home, 13 groups; industry, 13 sectors); GPC states with law, date and source; `data/README.md`; notes in `inference-map.md` and `PRODUCT.md` (incl. M-03 resting on Census income). Not included: engine, tests, review list, industry wages. Census API without a key.
+   - *Confirmed.*
+
+**Confirmed intent:** Interpretation 2.
+
+**Executed:**
+- `data/zip-income-housing.json` (B19013, B25064, B25003), `data/zip-language.json` (C16001), `data/zip-industry.json` (C24050 lines 2–14): 33,772 ZCTAs. Deviation: the Census API now requires a key, so the bulk table-based Summary File was used instead (no key, no visitor data)
+- `data/gpc-states.json`: 12 states (CA, CO, CT, TX, MT, NH, NE, NJ, MN, OR, DE, MD), four marked as explicitly naming GPC; Maryland and New Jersey dates flagged to confirm against statute
+- `data/README.md`: sources, table IDs, download date, caveats (top-coding, missing values, margins of error, ZCTA ≠ ZIP)
+- `inference-map.md` Part 5: ACS and GPC marked bundled, IRS marked skipped
+- `PRODUCT.md`: "Bundled datasets" item with open checks
+- Build script left in the session scratchpad (not in the repo)
+- Not changed: `index.html`, tests
+
+**Verdict:** Fulfilled. ("Yes")
+
+---
+
+## 031 · Finish the engine before tests: plan, and group E (map statuses)
+**Date:** 2026-11-26
+
+**Instruction:** Finish configuring the engine and the inference map before running tests; take care of all the open items first.
+
+**Interpretations:**
+1. Five groups: A (rules needing the new datasets), B (the user's review list), C (Planned items not needing new data), D (more datasets: release-year table, industry wages), E (tidy map statuses). Asked: which groups? How to combine device signals with area income? Data files don't load from `file://`: acceptable, or embed?
+   - *Answers:* A, B, C and E. Be truthful: state the area's figures as what people there earn, pay and own, beside the device evidence, without a range for the person. Table `file://` until browser testing, but everything must work as normal while the engine is tested.
+2. Order E → A → C → B, a check-back after each. The engine reads area data from one input object filled by the page; if the files don't load, the ZIP rules don't fire and everything else works. Note the `file://` question in `PRODUCT.md`. Syntax checks only; tests not edited or run.
+   - *Confirmed.*
+
+**Confirmed intent:** Interpretation 2.
+
+**Executed (group E):**
+- `inference-map.md`: statuses on every rule match `index.html`; 46 items marked Built; 14 marked Planned (ZIP data); T2-N Held; review-list items tagged; device age and T2-D timeframe marked as needing an unbundled release-year table; corrections (Mac not an income signal, M-07 payday figure and M-06 co-op clause not in built text, Sephora sentence California only); new status key; implementation note for devlog 031
+- Not changed: `index.html`, tests
+
+**Verdict:** Fulfilled. ("Yes")
+
+---
+
+## 032 · Group A: area data in the engine
+**Date:** 2026-11-26
+
+**Instruction:** (Group A of devlog 031's confirmed plan.) Build the rules that need the bundled datasets.
+
+**Interpretations:** covered by devlog 031, interpretation 2 (income band stated as the area's figures, not a range for the person; engine reads area data from one input object; rules stay silent without it).
+
+**Executed:**
+- `index.html` engine: area helpers (`engArea`, household-weighted income percentile, tiers, money formatting); ZIP used only on home/small-ISP/satellite US connections within 50 km, reliable income only (≥200 households, MOE ≤30% or top-coded); T2-A high-income ZIP path, area sentence and low-income-ZIP suppression; M-03 and A-04 on T1-31 (two-sentence cap with R-07); B-01 on T1-32 (EarthLink added to the provider table); T1-23 state GPC sentence; T2-B low-income ZIP path; T2-C ZIP language support and A-05; T2-L location label; T2-M income-tier label
+- `index.html` page: `Z` loaded from `data/` for US connections after the IP lookup, passed to the engine; silent on failure
+- Fix during the build: top-coded ($250,000+) ZIPs have no margin of error and were being dropped; now accepted
+- `inference-map.md`: statuses, implementation note for devlog 032; T2-B mobile-only path marked not buildable (carriers give no ZIP)
+- `PRODUCT.md`: `file://` limit noted to revisit at browser testing; `data/README.md` updated
+- Checks: `node --check` on inline scripts; throwaway engine run on five synthetic visitors in the scratchpad. Tests not edited or run
+- Noted to the user: the Google Ads tier can appear twice (T1-31 and T2-M)
+
+**Verdict:** Fulfilled. ("Yes")
+
+---
+
+## 033 · Group C: Planned items without new data
+**Date:** 2026-11-26
+
+**Instruction:** (Group C of devlog 031's confirmed plan.)
+
+**Interpretations:** covered by devlog 031, interpretation 2.
+
+**Executed:**
+- `index.html` engine: T1-35 Android (only when T1-01 hasn't named the model); T1-37 low battery (observed fact only)
+- Not built: T1-37's Uber sentence and T2-K (✗ source needed); T2-L behavior group (the profile is computed once while behavior accumulates; the FTC sentence is already live in T1-27); T2-N put back to the user
+- `inference-map.md`: statuses and implementation note
+- Checks: `node --check`; throwaway engine run in the scratchpad. Tests not edited or run
+
+**Verdict:** Fulfilled. ("Yes")
+
+---
+
+## 034 · T2-N built; Uber sentence added
+**Date:** 2026-11-26
+
+**Instruction:** Reword T2-N so it says the visitor is a target for predatory organizations like lenders and for-profit colleges. Then: "Yes but add in the Uber surcharge piece despite not having a source."
+
+**Interpretations:**
+1. Build T2-N (military network + tight-budget signal) with: "…this makes you a target for predatory organizations, like lenders and for-profit colleges." Flagged that lenders are still unverified (only for-profit colleges is confirmed); asked whether to keep "lenders".
+   - *Answer:* yes, as written, and also add T1-37's Uber sentence without a source.
+
+**Confirmed intent:** Interpretation 1 plus the Uber sentence.
+
+**Executed:**
+- `index.html` engine: T2-N (phone only, matching "a phone and settings"); T1-37 Uber sentence
+- `inference-map.md`: T2-N and T1-37 statuses; assembly rule 11 notes the Uber exception; implementation note
+- `PRODUCT.md`: review list notes the Uber sentence shipped but is still worth sourcing
+- Checks: `node --check`; throwaway engine run. Tests not edited or run
+- Noted, not changed: institutional networks without a city read "in or near [state]"
+
+**Verdict:** Fulfilled. ("Yes")
+
+---
+
+## 035 · Group B: the user's review list
+**Date:** 2026-11-26
+
+**Instruction:** (Group B of devlog 031's confirmed plan.) Source search results and decisions presented; the user answered: 1 build school networks in T2-J; 2 build T2-D's Spanish-dominance and ICE sentences, not the timeframe; 3 M-05 in T2-C and T2-M; 4 build the Parkinson's sentence; 5 reproductive health to Part Three later; 6 allow three targeting sentences on T2-B for Epsilon; 7 ship the lending study with "German" in the wording.
+
+**Interpretations:**
+1. As answered, plus: three targeting sentences also allowed on Spanish T2-C (M-05) and T1-27 (Parkinson's); the ad-click lending sentence left out (no ad-click detection); lobbying sentence reworded to the Washingtonian source (White House); Uber source upgraded to ~; T2-K stays out; A-04 figures and B-04 closed; map rules record the exceptions; `PRODUCT.md` review list updated.
+   - *Confirmed.*
+
+**Confirmed intent:** Interpretation 1.
+
+**Executed:**
+- `index.html` engine: T2-J school districts; T2-D B-20 and R-05 sentences; M-05 in T2-C and a T2-M label; T1-27 Parkinson's sentence after 50+ mouse movements; T2-B Epsilon; A-02 German wording on T1-02 (teen-guarded), T1-01/T1-35, T1-16; A-10 on government networks
+- `inference-map.md`: statuses, assembly rules 10 and 11 exceptions, implementation note
+- `PRODUCT.md`: review list marked resolved with what's still open
+- Source search: Epsilon (DOJ via search, AARP), lobbying (Washingtonian 2019, read), Uber (TechRadar, Quartz, CBC); none found for T2-K or a US version of A-02
+- Checks: `node --check`; throwaway engine run in the scratchpad. Tests not edited or run
+- Raised: the Android lending sentence lacked the teen guard; "Washington, D.C.." doubled period (pre-existing)
+
+**Verdict:** Fulfilled. ("otherwise yes this did what i intended")
+
+---
+
+## 036 · Android teen guard; D.C. period fix
+**Date:** 2026-11-26
+
+**Instruction:** Yes to both follow-ups from 035: add a teen guard to the Android lending sentence, and fix the doubled period.
+
+**Interpretations:** the two follow-ups as offered in 035 (taken as confirmed by the user's answer).
+
+**Executed:**
+- `index.html` engine: teen-guard variables moved above T1-01; Android lending sentence (T1-01, T1-35) withheld on school networks and during school hours; T1-31 no longer adds a period after a place ending in one
+- `inference-map.md`: note and status
+- Checks: `node --check`; throwaway engine run
+
+**Verdict:** Fulfilled. ("Your updates to teen guard and DC meet my intent.")
+
+---
+
+## 037 · Decision backlog cleared
+**Date:** 2026-11-26
+
+**Instruction:** Before test visitors, collect every pending decision so the user can answer them all. (Question answered with a 22-item list; the user then answered and asked for clarifications on 6, 9, 10 and 21.)
+
+**Interpretations:**
+1. Engine and map: Google Ads tier said once; "in [state]"; drop the ad-click sentence, T2-K and device age; narrow T2-E to low vision; accept T2-B grouping; drop price placeholders (keep tiers); check the Maryland and New Jersey GPC dates; fix the `PRODUCT.md` datasets line; all four cookies session-only, drop T1-26 and simGA's visit count and first-visit event. Defer 15–20 and 22 to a front-end pass. Asked: add a high-end GPU tier? Correct front-end text that would become false after the cookie change? Clarified 6 (area industry: data, truthfulness, reach), 9 (profile order), 10 (the [2] caps), 21 (serve vs. embed).
+   - *Answers:* 6 option B with the user's wording ("The highest wages in this ZIP code are in the [x] industry. It's likely that advertisers will target you based on this information."); 9 front-end choice, later; 10 revisit after testing; 21 serve, flag for finalizing; add the GPU tier; correct the flagged front-end lines now.
+2. Full set restated, with the T2-J area trigger (premium device or professional software on a home connection in a low-income ZIP) and the advertiser sentence recorded as an exception.
+   - *Confirmed.*
+
+**Confirmed intent:** Interpretation 2.
+
+**Executed:**
+- `data/zip-industry-earnings.json` (ACS B24031, 13 sectors, MOE >30% set to null); `data/gpc-states.json`: Maryland removed after reading the enacted act (§ 14-4607(F)(3) makes the signal one of two options), New Jersey 2025-07-15 confirmed
+- `index.html` engine: T1-31 "in [state]" without a city, M-03 removed when T2-M shows the tier; T1-03 high-end GPU list feeding T2-A; T2-E narrowed; T2-J area path; T1-26 removed
+- `index.html` page: session cookies (no expiry); simGA session count and first_visit removed; cookie cards and log line reworded; loader fetches the two industry files
+- `inference-map.md`, `data/README.md`, `PRODUCT.md` (front-end pass section, cookies resolved, caps to revisit, serve-vs-embed before going live)
+- Slip, corrected: build scripts were copied into `data/` and then removed (not in scope)
+- Checks: `node --check`; throwaway engine run in the scratchpad. Tests not edited or run
+
+**Verdict:** Fulfilled. ("Yes")

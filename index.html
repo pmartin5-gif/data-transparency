@@ -238,7 +238,6 @@ function gtag(cmd, name, params) {
   const t = performance.now();
   simGA.events.push({
     v: '2', tid: simGA.measurementId, cid: simGA.clientId, sid: simGA.sessionId,
-    sct: typeof vis === 'number' ? vis : null,            // session count (this page's visit counter)
     en: name, ep: Object.assign({}, params || {}),          // event name and parameters
     dl: location.href, dr: document.referrer, dt: document.title,
     sr: `${screen.width}x${screen.height}`, ul: (navigator.language || '').toLowerCase(),
@@ -249,7 +248,7 @@ function gtag(cmd, name, params) {
 }
 // Events GA4 sends automatically on load
 setTimeout(() => {
-  if (vis === 1) gtag('event', 'first_visit');
+  // first_visit and the session count were removed in devlog 037: the page keeps no visit history.
   gtag('event', 'session_start');
   gtag('event', 'page_view');
 }, 0);
@@ -412,13 +411,15 @@ async function getSpeechVoices() {
 }
 
 // ── COOKIES ──
-function setCk(n,v,d){document.cookie=`${n}=${v}; expires=${new Date(Date.now()+d*864e5).toUTCString()}; path=/`;}
+// Session cookies only (devlog 037): no expiry, so the browser deletes them when it closes, in line with the
+// single-session rule for the local recorders (CLAUDE.md). The page keeps no visit history.
+function setCk(n,v){document.cookie=`${n}=${v}; path=/; SameSite=Lax`;}
 function getCk(n){const m=document.cookie.match(new RegExp('(?:^|; )'+n+'=([^;]*)'));return m?m[1]:null;}
 const uid=getCk('dtrans_uid')||('u_'+Math.random().toString(36).slice(2,10));
 const sid='s_'+Math.random().toString(36).slice(2,10);
 const vis=parseInt(getCk('dtrans_v')||'0')+1;
-setCk('dtrans_uid',uid,365); setCk('dtrans_session',sid,1);
-setCk('dtrans_v',vis,365); setCk('dtrans_ref',document.referrer||'direct',30);
+setCk('dtrans_uid',uid); setCk('dtrans_session',sid);
+setCk('dtrans_v',vis); setCk('dtrans_ref',document.referrer||'direct');
 
 // ── MAIN ASYNC ORCHESTRATION ──
 Promise.all([
@@ -732,9 +733,21 @@ async function collectNetwork(){
     N.ms=Math.round(performance.now()-t);
     N.ready=true;
     refreshProfile();
+    if(N.status==='ok'&&N.country==='US') loadAreaData();
   }
 }
 collectNetwork();
+
+// ── AREA DATA (devlog 032) ──
+// Z = public Census figures by ZIP and the state GPC list, bundled in data/ (devlog 030) and
+// fetched from this page's own folder, so nothing about the visitor is sent anywhere. Loaded only
+// for US connections. Browsers block these fetches when the page is opened from disk (file://):
+// Z then stays empty and the rules that need it stay silent (PRODUCT.md, to revisit).
+const Z = { income:null, language:null, gpc:null, industry:null, earnings:null };
+function loadAreaData(){
+  for(const [key,file] of [['gpc','gpc-states.json'],['income','zip-income-housing.json'],['language','zip-language.json'],['industry','zip-industry.json'],['earnings','zip-industry-earnings.json']])
+    fetch('data/'+file,{credentials:'omit'}).then(r=>r.ok?r.json():null).then(j=>{ if(j){ Z[key]=j; refreshProfile(); } }).catch(()=>{});
+}
 
 // ── BEHAVIORAL RECORD ──
 const B = (()=>{
@@ -915,6 +928,7 @@ const ENG_PROVIDERS=[
   [/dish wireless|boost/i,'Boost Mobile','mobile'],
   [/charter|spectrum|time warner cable/i,'Spectrum','home'],
   [/comcast/i,'Xfinity','home'],
+  [/earthlink/i,'EarthLink','home'],
   [/^at&t|att services|at&t services|at&t corp/i,'AT&T','home'],
   [/verizon|mci communications|uunet/i,'Verizon','home'],
   [/cox communications/i,'Cox','home'],
@@ -979,6 +993,8 @@ function engGpuName(r){
   if(!s||/^Apple GPU$|SwiftShader|llvmpipe|Software|Microsoft Basic Render/i.test(s)) return '';
   return s;
 }
+// High-end graphics cards (devlog 037): NVIDIA RTX xx70 and up (20–50 series), AMD RX 7800 and up and RX 9070, workstation cards
+const ENG_GPU_HIGH=/\bRTX\s*(20|30|40|50)(70|80|90)\b|\bTITAN\b|\bQuadro\b|\bRTX\s*A\d{3,4}\b|\bRTX\s*\d{4}\s*Ada\b|\bRTX\s*PRO\b|\bRX\s*(78|79)\d0\b|\bRX\s*9070\b|\bRadeon\s*PRO\s*W\d/i;
 function engKeyboard(k){
   if(!k) return null;
   const q=(k.KeyQ||'').toLowerCase(), y=(k.KeyY||'').toLowerCase(), a=(k.KeyA||'').toLowerCase(), sc=(k.Semicolon||'').toLowerCase();
@@ -996,6 +1012,65 @@ function engKeyboard(k){
   return null; // US/UK-style QWERTY or unknown: nothing to say
 }
 
+// ── Area data (devlog 032): Census ACS 2020–2024 by ZIP and the state GPC list, bundled in data/ (devlog 030).
+// Passed in as D.Z by the page; when it's missing (files not loaded), every rule below that needs it stays silent.
+const ENG_US_MEDIAN_INCOME=80734;   // ACS 2020–2024, US median household income (B19013)
+const ENG_LANG_ACS={es:['spanishPct','Spanish'],fr:['frenchHaitianCajunPct','French, Haitian or Cajun'],ht:['frenchHaitianCajunPct','French, Haitian or Cajun'],
+  de:['germanWestGermanicPct','German or another West Germanic language'],nl:['germanWestGermanicPct','German or another West Germanic language'],yi:['germanWestGermanicPct','German or another West Germanic language'],
+  ru:['russianPolishSlavicPct','Russian, Polish or another Slavic language'],pl:['russianPolishSlavicPct','Russian, Polish or another Slavic language'],uk:['russianPolishSlavicPct','Russian, Polish or another Slavic language'],
+  cs:['russianPolishSlavicPct','Russian, Polish or another Slavic language'],sk:['russianPolishSlavicPct','Russian, Polish or another Slavic language'],sr:['russianPolishSlavicPct','Russian, Polish or another Slavic language'],
+  hr:['russianPolishSlavicPct','Russian, Polish or another Slavic language'],bg:['russianPolishSlavicPct','Russian, Polish or another Slavic language'],
+  ko:['koreanPct','Korean'],zh:['chinesePct','Chinese'],vi:['vietnamesePct','Vietnamese'],tl:['tagalogPct','Tagalog'],fil:['tagalogPct','Tagalog'],ar:['arabicPct','Arabic']};
+const ENG_US_LANG_PCT={spanishPct:14.35,frenchHaitianCajunPct:0.68,germanWestGermanicPct:0.46,russianPolishSlavicPct:0.7,koreanPct:0.34,chinesePct:1.11,vietnamesePct:0.49,tagalogPct:0.56,arabicPct:0.45};   // population-weighted from data/zip-language.json
+const ENG_ASIAN_LANGS=['zh','ko','vi','tl','fil','ja','th','km','lo','hmn','my','id','ms'];
+const ENG_ASIAN_ACS=['koreanPct','chinesePct','vietnamesePct','tagalogPct','otherAsianPacificPct'];
+const engRankCache=new WeakMap();
+function engZipRow(T,zip){ const r=T&&T[zip]; if(!r||!T._fields) return null; const o={}; T._fields.forEach((f,i)=>o[f]=r[i]); return o; }
+// Share of US households (0–100) living in ZIP codes with a lower median income than `income`.
+function engIncomePct(T,income){
+  let c=engRankCache.get(T);
+  if(!c){ const rows=[]; for(const k in T){ if(k==='_fields') continue; const r=T[k]; if(r[0]&&r[4]) rows.push([r[0],r[4]]); }
+    rows.sort((a,b)=>a[0]-b[0]); const total=rows.reduce((n,r)=>n+r[1],0); let cum=0; c=rows.map(r=>{ const below=cum; cum+=r[1]; return [r[0],100*below/total]; }); engRankCache.set(T,c); }
+  let lo=0, hi=c.length;   // first ZIP whose income is ≥ this one
+  while(lo<hi){ const m=(lo+hi)>>1; if(c[m][0]<income) lo=m+1; else hi=m; }
+  return lo<c.length?c[lo][1]:100;
+}
+function engTier(pct){ const top=100-pct; return top<=10?'top 10%':top<=20?'11–20%':top<=30?'21–30%':top<=40?'31–40%':top<=50?'41–50%':'lower 50%'; }
+function engMoney(n,cap){ return '$'+(n>=cap?(cap-1).toLocaleString('en-US')+' or more':n.toLocaleString('en-US')); }
+// The visitor's area, only where the ZIP plausibly reflects where they live: a home, small-ISP or satellite
+// connection in the US, located to within 50 km. Income only when the estimate is reliable (≥200 households, MOE ≤30%, or top-coded at $250,000+).
+function engArea(Z,ipLoc,prov){
+  if(!Z||!ipLoc||ipLoc.country!=='US'||!ipLoc.postal) return null;
+  if(!prov||!['home','isp','satellite'].includes(prov.type)) return null;
+  if(ipLoc.accuracyKm!=null&&ipLoc.accuracyKm>50) return null;
+  const zip=String(ipLoc.postal).slice(0,5), inc=engZipRow(Z.income,zip), lang=engZipRow(Z.language,zip);
+  const a={zip, lang:lang&&lang.population5plus>=200?lang:null, income:null};
+  if(inc&&inc.medianHouseholdIncome&&inc.occupiedHousingUnits>=200&&(inc.medianHouseholdIncome>=250001||(inc.incomeMarginOfError!=null&&inc.incomeMarginOfError<=0.3*inc.medianHouseholdIncome))){   // top-coded incomes have no MOE
+    a.income=inc.medianHouseholdIncome; a.rent=inc.medianGrossRent; a.own=inc.ownerOccupiedPct;
+    a.pct=engIncomePct(Z.income,a.income); a.tier=engTier(a.pct);
+    a.high=a.pct>=80; a.low=a.pct<20; a.belowMedian=a.income<ENG_US_MEDIAN_INCOME;
+  }
+  return (a.income||a.lang)?a:null;
+}
+function engAreaSentence(a){
+  return `In ZIP code ${a.zip}, the median household income is ${engMoney(a.income,250001)} a year`+(a.rent?`, the median rent is ${engMoney(a.rent,3501)} a month`:'')
+    +`, and ${Math.round(a.own)}% of homes are lived in by their owners. These are Census figures for everyone in the area; this page can’t know your own.`;
+}
+// A-02 · Berg, Burg, Gombović & Puri, RFS 2020: German e-commerce data, so the wording says so (devlog 035)
+const ENG_A02_IPHONE=' In a German lending study, iPhone users repaid more reliably than Android users: the gap was about as large as the one between an average credit score and a top-fifth one.', ENG_A02_ANDROID=' In a German lending study, Android users defaulted on payments about 1.7 times as often as iPhone users (1.79% vs. 1.07%).';
+// Area industry (devlog 037): the 13 Census sectors shared by zip-industry.json and zip-industry-earnings.json
+const ENG_SECTOR_NAMES=['agriculture, forestry, fishing and mining','construction','manufacturing','wholesale trade','retail','transportation, warehousing and utilities','information','finance, insurance and real estate','professional, scientific and management services','education and health care','arts, entertainment, hotel and food services','other services','public administration'];
+// Highest median earnings among sectors with at least 50 local workers and a reliable estimate (MOE ≤30%, filtered in the data); needs two such sectors.
+function engTopWageSector(Z,zip){
+  const ind=engZipRow(Z&&Z.industry,zip), ern=Z&&Z.earnings&&Z.earnings[zip];
+  if(!ind||!ern) return null;
+  const workers=ind.civilianWorkers16plus, shares=Z.industry[zip].slice(1), wages=ern.slice(1);
+  const ok=ENG_SECTOR_NAMES.map((n,i)=>({n,w:wages[i],count:workers*(shares[i]||0)/100})).filter(x=>x.w&&x.count>=50);
+  if(ok.length<2) return null;
+  return ok.sort((a,b)=>b.w-a.w)[0].n;
+}
+const ENG_A04='Online stores have charged different prices depending on where shoppers connect from. When the Wall Street Journal tested Staples’ site, lower-income areas were less likely to get discounts.';   // A-04 (WSJ via WTOP)
+
 // ── T1-27 (live): attention this visit ──
 function inferLive(B){
   B=B||{}; const out=[];
@@ -1005,8 +1080,9 @@ function inferLive(B){
   if(tab.hiddenCount>0) out.push(`You’ve left this tab ${tab.hiddenCount===1?'once':tab.hiddenCount+' times'}, for ${engDuration(tab.awayMs||0)} in total.`);
   const secs=Object.entries(B.sectionsMs||{}).sort((a,b)=>b[1]-a[1]);
   if(secs.length&&secs[0][1]>=10000) out.push(`You’ve spent longest on “${secs[0][0]}” (${engDuration(secs[0][1])}).`);
-  // Targeting (devlog 028; at most two): A-06 FTC study, B-14 Princeton CITP 2017
-  if(out.length) out.push('Pricing firms studied by the FTC say they use behavior on a page, down to mouse movements, to tailor prices. Hundreds of popular sites record this same kind of activity with session-replay tools, and some recordings have captured passwords.');
+  // Targeting: A-06 FTC study, B-14 Princeton CITP 2017 (devlog 028); A-32 Parkinson's capability sentence once mouse movement is recorded (third allowed, devlog 035)
+  if(out.length) out.push('Pricing firms studied by the FTC say they use behavior on a page, down to mouse movements, to tailor prices. Hundreds of popular sites record this same kind of activity with session-replay tools, and some recordings have captured passwords.'
+    +(B.mouse&&B.mouse.moves>=50?' Researchers have screened for Parkinson’s disease from mouse movements like the ones this page recorded.':''));
   return { ids: out.length?['T1-27']:[], text: out.join(' ') };
 }
 
@@ -1018,6 +1094,7 @@ function inferProfile(D){
   // IP data (recorder N). Not trusted for location when the provider looks like a VPN or data center.
   const ip=N.status==='ok'?N:null, prov=ip?engProvider(ip.org):null, ipHidden=!!(prov&&(prov.type==='hosting'||prov.type==='relay'));
   const ipLoc=ip&&!ipHidden?ip:null;
+  const Z=D.Z||null, area=engArea(Z,ipLoc,prov);   // area data (devlog 032)
   const tz=S.tz||'', zone=profileZoneName(tz);
   const isUS=ipLoc&&ipLoc.country?ipLoc.country==='US':ENG_US_TZ.test(tz);   // connection country when known, else time zone
   const langTags=(S.langs&&S.langs.length?S.langs:[S.lang||'']);
@@ -1027,20 +1104,22 @@ function inferProfile(D){
   const mp=X.mediaPrefs||{};
 
   // ── Device (D) ──
-  if(S.isAndroid&&ch&&ch.model) add('T1-01','D','device','device-id','Obs',`Your phone reports its model as ${ch.model}. Any site you visit can read this, and a model number points to roughly what a phone cost and when it was made.`,{model:ch.model});
-  // Teen guard (A-15, devlog 028): 88% of US teens own an iPhone, so no income reading from an iPhone
-  // on a school network or during school hours (weekdays 7 AM–4 PM). The iPhone fact still shows.
+  // Teen guard (A-15, devlog 028): 88% of US teens own an iPhone, so no income or lending reading on a school network
+  // or during school hours (weekdays 7 AM–4 PM). Extended to the Android lending sentence in devlog 036. The device facts still show.
   const vt0=B.visitTime||{}, schoolHours=vt0.dayOfWeek>=1&&vt0.dayOfWeek<=5&&vt0.hour>=7&&vt0.hour<16;
   const onSchoolNet=!!(N.status==='ok'&&engProvider(N.org)&&engProvider(N.org).type==='school');
-  const incomeOK=isUS&&!schoolHours&&!onSchoolNet;
+  const teenOK=!schoolHours&&!onSchoolNet, incomeOK=isUS&&teenOK;
+  if(S.isAndroid&&ch&&ch.model) add('T1-01','D','device','device-id','Obs',`Your phone reports its model as ${ch.model}. Any site you visit can read this, and a model number points to roughly what a phone cost and when it was made.`+(teenOK?ENG_A02_ANDROID:''),{model:ch.model});   // A-02 (Berg et al. 2020, German data; devlog 035)
   if(S.isIOS&&S.isMobile) add('T1-02','D','device','device-id', incomeOK?'Likely':'Obs',
     'You’re on an iPhone.'+(incomeOK?' In the US, owning an iPhone was the single best predictor of high household income in 2016: it identified high earners correctly 69% of the time.':'')
-    +(isUS?` Advertisers ${incomeOK?'also ':''}pay more to show you an ad than they would for an Android user.`:''), {premium:incomeOK});
+    +(isUS?` Advertisers ${incomeOK?'also ':''}pay more to show you an ad than they would for an Android user.`:'')
+    +(incomeOK?ENG_A02_IPHONE:''), {premium:incomeOK});   // A-02 (German data; devlog 035), withheld by the teen guard
   const rawGpu=(X.webgl&&X.webgl.unmaskedRenderer)||'';
   const chip=rawGpu.match(/Apple (M\d+)(?: (Pro|Max|Ultra))?/);
   if(chip) add('T1-04','D','device','device-id','Strong',
     `Your Mac runs on an Apple ${chip[1]}${chip[2]?' '+chip[2]:''} chip${chip[2]?', from the higher-priced tiers of Apple’s lineup':''}.`, {premium:!!chip[2]});
-  else { const gpu=engGpuName(rawGpu)||(X.webgpu&&X.webgpu.description)||''; if(gpu&&!S.isMobile) add('T1-03','D','device','device-id','Obs',`Your computer’s graphics hardware identifies itself as ${gpu}. Sites read this without asking, and it is one of the details that sets your computer apart from others.`); }
+  else { const gpu=engGpuName(rawGpu)||(X.webgpu&&X.webgpu.description)||''; const hi=ENG_GPU_HIGH.test(gpu);
+    if(gpu&&!S.isMobile) add('T1-03','D','device','device-id',hi?'Likely':'Obs',`Your computer’s graphics hardware identifies itself as ${gpu}${hi?', a high-end card, typically bought by people with money to spend on their computer':''}. Sites read this without asking, and it is one of the details that sets your computer apart from others.`,{premium:hi&&incomeOK}); }
   if((mp.colorGamut==='p3'||mp.colorGamut==='rec2020')&&mp.dynamicRange==='high'&&!S.isMac&&!S.isIOS)
     add('T1-05','D','device','display','Likely','Your screen supports wide colour and HDR, features found mostly on higher-priced displays.',{premium:true});
   if(S.isWin&&ch&&ch.platformVersion){ const major=parseInt(ch.platformVersion,10);
@@ -1050,6 +1129,11 @@ function inferProfile(D){
   if(S.conn&&S.conn.save) add('T1-08','D','device','data-plan','Likely','Your browser asks websites to use less data, a setting usually turned on to manage a limited data plan.',{costSignal:true});
   if(X.screen&&X.screen.isExtended===true) add('T1-09','D','device','monitors','Obs','You’re using more than one monitor, a setup most common at a desk used for work.');
   // T1-36 · Mac (devlog 028; A-03, company figures via ABC News 2012)
+  // T1-35 · Android phone (devlog 033). Only when T1-01 hasn't already named the model. No income reading from Android alone (B-08).
+  if(S.isAndroid&&S.isMobile&&!(ch&&ch.model)) add('T1-35','D','device','platform','Obs','You’re on an Android phone.'+(teenOK?ENG_A02_ANDROID:''));   // A-02 (German data; devlog 035)
+  // T1-37 · low battery (devlog 033; Chromium only). Uber sentence (A-40) added without a checked source, by the user's decision (devlog 034).
+  if(S.battery&&typeof S.battery.level==='number'&&S.battery.level<0.2&&!S.battery.charging)
+    add('T1-37','D','device','battery','Obs',`Your battery is at ${Math.round(S.battery.level*100)}% and not charging. Chrome-based browsers let any site read your battery level without asking. Uber’s head of economic research said a low battery is one of the strongest predictors that someone will accept surge pricing. Uber says it doesn’t use this to set fares.`);
   if(S.isMac&&!S.isIOS&&!S.isMobile&&!(S.touch>0)) add('T1-36','D','device','platform','Obs','You’re on a Mac. Orbitz has shown Mac users pricier hotels first, because its data showed Mac users spend as much as 30% more on hotels and are 40% more likely to book four- or five-star rooms.',{mac:true});
 
   // ── Installed software (W) ──
@@ -1079,18 +1163,23 @@ function inferProfile(D){
     const how=home
       ?' Any site or link you open can work this out from your IP address, without asking. On a home connection, paid location services can often place you within a few miles of where you live, which is why domestic-violence advocates recommend a VPN for people at risk.'   // R-07
       :' Any site you visit can work this out from your IP address, without asking for your location.';
-    if(place) add('T1-31','I','place','location','Obs',`Your internet connection places you ${coarse?'in':'in or near'} ${place}${postal}${within}.`+how+' When a site shows ads, details like your device, language, IP address and location are sent to the companies bidding to show you one.',{city:ipLoc.city||null});   // M-01 (OpenRTB 2.6)
+    // Area targeting (devlog 032), at most two targeting sentences with R-07: M-03 Google Ads tier, A-04 location pricing (below the US median)
+    const m03=area&&area.income?` By Census figures, your area falls in what Google Ads calls the ${area.tier} household-income tier. Advertisers can pay more to reach people there, or leave them out.`:'';   // M-03
+    const a04=area&&area.income&&area.belowMedian?' '+ENG_A04:'';
+    const areaT=home?(a04||m03):(m03+a04);
+    if(place) add('T1-31','I','place','location','Obs',`Your internet connection places you ${coarse||!ipLoc.city?'in':'in or near'} ${place}${postal}${within}${/\.$/.test(place+postal+within)?'':'.'}`+how+areaT+' When a site shows ads, details like your device, language, IP address and location are sent to the companies bidding to show you one.',{city:ipLoc.city||null,a04:a04&&areaT.includes(a04)?a04:'',m03:m03&&areaT.includes(m03)?m03:''});   // M-01 (OpenRTB 2.6)
   }
   else if(zone) add('T1-10','Z','place','zone','Obs',`Your device’s clock is set to ${zone}. Combined with your language settings, this places you in a region before any location permission is asked.`);
   // T1-32 · internet provider
   if(ip&&ip.org&&!ipHidden){
     const name=(prov&&prov.brand)||engOrgName(ip.org), type=prov?prov.type:null;
     const T={
-      home:['Obs',`Your internet service is ${name}, a home internet provider, so your IP address points to a household connection. ${name} can match that address to the account holder.`],
+      home:['Obs',`Your internet service is ${name}, a home internet provider, so your IP address points to a household connection. ${name} can match that address to the account holder.`
+        +(area&&area.income&&area.belowMedian&&(/^(AT&T|Verizon|EarthLink)$/.test(name)||/centurylink|qwest/i.test(ip.org))?` ${name} has been found to charge the same price for much slower internet in lower-income neighborhoods; in 92% of the cities where its speeds varied, poorer areas got the worse deals.`:'')],   // B-01 (The Markup 2022)
       mobile:['Likely',`You’re connected through ${name}’s cellular network.`],
       satellite:['Obs',`You’re connected through ${name}, a satellite internet service.`+(name==='Starlink'?' Over 85% of Starlink’s US customers live in mostly rural areas, so you most likely live somewhere without cable or fiber.':'')],   // B-03
       university:['Likely',`You’re connected through ${name}’s network, so you’re most likely on campus.`],
-      government:['Likely',`You’re connected through ${name}, a government network. Ad-auction data has been used to target US political decision makers and sent to firms in Russia and China.`],   // R-03 (ICCL 2023)
+      government:['Likely',`You’re connected through ${name}, a government network. Lobbyists have aimed ads at the IP addresses of the White House. Ad-auction data has been used to target US political decision makers and sent to firms in Russia and China.`],   // A-10 (Washingtonian 2019; devlog 035), R-03 (ICCL 2023)
       school:['Likely',`You’re connected through ${name}’s network, a school district, so you’re most likely a student or a member of school staff.`],
       hospital:['Likely',`You’re connected through ${name}’s network, a hospital or health system, so you’re most likely a patient, a visitor or a member of staff. A third of top US hospital websites have sent visitors’ appointment details to Facebook.`],   // A-35 (The Markup 2022)
       library:['Likely',`You’re connected through ${name}’s network, a public library.`],
@@ -1120,15 +1209,14 @@ function inferProfile(D){
   // ── Time (T) ──
   const vt=B.visitTime||{}, h=vt.hour, dayName=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'][vt.dayOfWeek];
   if(typeof h==='number'){
-    if(h<5) add('T1-16','T','time','time-of-visit','Obs',`It’s ${engTime(h,vt.minute)} where you are. Every visit is timestamped, and over time those timestamps sketch your daily routine. In one retailer’s survey, 39% of Americans said they make impulse purchases when shopping online late at night.`);   // A-41 (CouponFollow 2026)
+    if(h<5) add('T1-16','T','time','time-of-visit','Obs',`It’s ${engTime(h,vt.minute)} where you are. Every visit is timestamped, and over time those timestamps sketch your daily routine. In one retailer’s survey, 39% of Americans said they make impulse purchases when shopping online late at night. In a German lending study, orders placed between midnight and 6 AM defaulted about twice as often as average.`);   // A-41 (CouponFollow 2026); A-02 (German data; devlog 035)
     else add('T1-15','T','time','time-of-visit','Obs',`You’re on ${S.isMobile?'a mobile device':'a computer'} at ${engTime(h,vt.minute)} on a ${dayName}. Every visit is timestamped, and over time those timestamps sketch your daily routine.`,
       {atWork:!S.isMobile&&vt.dayOfWeek>=1&&vt.dayOfWeek<=5&&h>=9&&h<17});
   }
   if(X.webdriver===true) add('T1-19','T','time','automation','Strong','This page is being read by automated software, not directly by a person.');
 
   // ── History (H) ──
-  const vis=parseInt(C.vis,10)||1;
-  if(vis>1) add('T1-26','H','history','returns','Obs',`This is your ${engOrdinal(vis)} visit. This page recognizes you through a cookie it set the first time you came.`);
+  // T1-26 (return visits) removed in devlog 037: the page's cookies are session cookies, so there is no visit history.
   if(S.histLen>1) add('T1-28','H','history','tab-history','Obs',
     (S.histLen>=50?'This tab had at least 49 pages in its history before you arrived.':`This tab had ${S.histLen-1} ${S.histLen-1===1?'page':'pages'} in its history before you arrived.`)+' Any page can read that count, though not the pages themselves.');
   const refHost=S.ref?(S.ref.split('/')[2]||''):'';
@@ -1169,7 +1257,14 @@ function inferProfile(D){
   if(ipHidden&&prov.type==='relay') add('T1-33','P','privacy','vpn','Likely',`Your connection comes from ${engOrgName(ip.org)}, not a home or mobile provider. You’re most likely using a privacy relay such as Apple’s iCloud Private Relay, which hides your exact location but keeps your rough region.`,{blocking:['your exact location'],relay:true});
   else if(ipHidden) add('T1-33','P','privacy','vpn','Likely',`Your connection comes from ${(prov&&prov.brand)||engOrgName(ip.org)}, a data-center or VPN company, not a home or mobile provider. You’re most likely using a VPN, which hides your real location from this page.`,{blocking:['your real location']});
   const req=[]; if(S.dnt==='1') req.push('You’ve asked websites not to track you (Do Not Track). Most sites ignore this signal, and because few browsers send it, it makes yours slightly easier to single out.');   // B-22
-  if(X.gpc===true) req.push('Your browser sends Global Privacy Control, an opt-out signal recognized under California law and in several other states.');
+  if(X.gpc===true){
+    // B-23 (devlog 032): the state sentence when the connection is in a state whose law requires honoring the signal (data/gpc-states.json)
+    const g=ip&&!ipHidden&&ip.country==='US'&&Z&&Z.gpc&&Z.gpc[ip.region], today=new Date().toISOString().slice(0,10);
+    if(g&&g.requiredFrom<=today) req.push('Your browser sends Global Privacy Control, an opt-out signal. '+(ip.region==='CA'
+      ?'In California, sites are legally required to treat it as an opt-out of selling or sharing your data. Sephora paid $1.2 million for ignoring it.'   // California AG 2022
+      :`In ${g.state}, sites covered by the state’s privacy law are legally required to treat it as an opt-out of selling your data and of targeted advertising.`));
+    else req.push('Your browser sends Global Privacy Control, an opt-out signal recognized under California law and in several other states.');
+  }
   if(req.length) add('T1-23','P','privacy','requests','Obs',req.join(' '),{requests:req.length});
 
   // ── Accessibility (A) ──
@@ -1184,33 +1279,54 @@ function inferProfile(D){
     `You’ve installed ${engList(rf)}, ${rf.length>1?'typefaces':'a typeface'} designed for ${rf.includes('OpenDyslexic')&&rf.includes('Atkinson Hyperlegible')?'readers with dyslexia and low vision':rf[0]==='OpenDyslexic'?'readers with dyslexia':'readers with low vision'}.`,{readingFonts:rf});
 
   // ── Tier 2 ──
-  const get=id=>st.find(s=>s.id===id), concl=[];
+  const get=id=>st.find(s=>s.id===id), concl=[], suppressed=[];
   const premium=st.filter(s=>s.premium), paid=st.filter(s=>s.paidSoftware);
-  if(isUS&&premium.length&&paid.length)
-    concl.push({id:'T2-A',conf:'Likely',absorbs:[...premium,...paid].map(s=>s.id),text:'Your equipment and software are consistent with a higher-income household. Data brokers make this same guess about people, and they’re often wrong: in one test, their income estimates put only 30–46% of people in the right bracket.'});   // Pew 2018
-  const low=get('T1-07'), costs=st.filter(s=>s.costSignal);
-  if(low&&costs.length)
-    concl.push({id:'T2-B',conf:'Likely',absorbs:[low.id,...costs.map(s=>s.id)],text:'Taken together, your phone and its settings suggest you’re managing costs carefully. Data brokers have sold lists of households like this under names like “Hard Times”, “Rural and Barely Making It” and “Credit Crunched: City Families”. Cash-advance apps have run ads aimed at people living “paycheck to paycheck”.'});   // A-08 (US Senate 2013), M-07 (Media Matters 2022)
+  const areaInc=area&&area.income?area:null, hasT31=!!get('T1-31');
+  // T2-A · income: premium device + (paid software, or a high-income ZIP: top 20% of US households by area income).
+  // A premium device in a low-income ZIP (bottom 20%) draws no conclusion (devlog 032). Area figures are stated as the area's, not the visitor's.
+  if(isUS&&premium.length&&(paid.length||(areaInc&&areaInc.high))){
+    if(areaInc&&areaInc.low) suppressed.push({id:'T2-A',reason:'premium device in a low-income ZIP; no conclusion'});
+    else concl.push({id:'T2-A',conf:'Likely',absorbs:[...premium,...paid].map(s=>s.id).concat(areaInc&&hasT31?['T1-31']:[]),
+      text:(paid.length?'Your equipment and software are consistent with a higher-income household.':'Your device is consistent with a higher-income household, and so is the area you’re connecting from.')
+        +(areaInc?' '+engAreaSentence(areaInc):'')
+        +' Data brokers make this same guess about people, and they’re often wrong: in one test, their income estimates put only 30–46% of people in the right bracket.'});   // Pew 2018
+  }
+  // T2-B · tight budget: low-cost phone + a cost setting, a library network, or (devlog 032) a low-income ZIP
+  const low=get('T1-07'), costs=st.filter(s=>s.costSignal), lowZip=!!(areaInc&&areaInc.low);
+  if(low&&(costs.length||lowZip))
+    concl.push({id:'T2-B',conf:'Likely',absorbs:[low.id,...costs.map(s=>s.id)].concat(lowZip&&hasT31?['T1-31']:[]),
+      text:`Taken together, your phone${costs.length?' and its settings':''}${lowZip?(costs.length?', and the area you’re connecting from,':' and the area you’re connecting from'):''} suggest you’re managing costs carefully.`
+        +(lowZip?' '+engAreaSentence(areaInc):'')
+        +' Data brokers have sold lists of households like this under names like “Hard Times”, “Rural and Barely Making It” and “Credit Crunched: City Families”. Cash-advance apps have run ads aimed at people living “paycheck to paycheck”. Data brokers have sold lists of vulnerable people directly to scammers: one, Epsilon, agreed to pay $150 million in 2021 to resolve Justice Department charges.'});   // A-08 (US Senate 2013), M-07 (Media Matters 2022), R-06 (DOJ 2021; third targeting sentence allowed, devlog 035)
+  // T2-C · language at home: support from installed software (W) or (devlog 032) the ZIP's share of speakers (I)
   const support=st.filter(s=>s.supportLangs&&s.supportLangs.includes(primaryBase));
-  if(isUS&&primaryBase&&primaryBase!=='en'&&get('T1-11')&&support.length){
+  const acs=ENG_LANG_ACS[primaryBase], zipShare=acs&&area&&area.lang?area.lang[acs[0]]:null;
+  const zipSupport=zipShare!=null&&zipShare>=Math.max(5,2*ENG_US_LANG_PCT[acs[0]]);
+  if(isUS&&primaryBase&&primaryBase!=='en'&&get('T1-11')&&(support.length||zipSupport)){
     const ln=engName(primaryBase,'language');
-    concl.push({id:'T2-C',conf:'Likely',absorbs:['T1-11',...(get('T1-12')?['T1-12']:[]),...support.map(s=>s.id)],
-      text:`You most likely speak ${ln} at home.`+(primaryBase==='es'?' About 93% of people in the US who speak Spanish at home are Hispanic or Latino.':'')   // A-22 (Pew, 2011 ACS)
+    const asianShare=area&&area.lang?ENG_ASIAN_ACS.reduce((n,k)=>n+(area.lang[k]||0),0):0;
+    concl.push({id:'T2-C',conf:'Likely',absorbs:['T1-11',...(get('T1-12')?['T1-12']:[]),...support.map(s=>s.id)].concat(zipSupport&&hasT31?['T1-31']:[]),
+      text:`You most likely speak ${ln} at home.`
+        +(zipSupport?` In your ZIP code, ${Math.round(zipShare)}% of people speak ${acs[1]} at home, against ${ENG_US_LANG_PCT[acs[0]]<1?'under 1':Math.round(ENG_US_LANG_PCT[acs[0]])}% nationally.`:'')   // ACS C16001
+        +(primaryBase==='es'?' About 93% of people in the US who speak Spanish at home are Hispanic or Latino.':'')   // A-22 (Pew, 2011 ACS)
         +' Facebook has labeled people’s ethnicity from what they liked online and let advertisers leave them out of ads in its housing categories.'   // A-24 (ProPublica 2016)
-        +(primaryBase==='es'?' Impersonation scams are the problem reported most often from majority-Latino communities.':'')});   // A-23 (FTC)
+        +(primaryBase==='es'?' Impersonation scams are the problem reported most often from majority-Latino communities.':'')   // A-23 (FTC)
+        +(primaryBase==='es'?' Marketers sell Hispanic audience segments by language, by generation in the US (first, second, third) and by country of origin. A browser set to Spanish first is the kind of signal those labels are built on.':'')   // M-05 (Lotame; third targeting sentence allowed, devlog 035)
+        +(ENG_ASIAN_LANGS.includes(primaryBase)&&asianShare>=10?' The Princeton Review priced its online tutoring by ZIP code, and customers in areas with many Asian residents were 1.8 times as likely to be offered a higher price.':'')});   // A-05 (ProPublica 2015)
   }
   const m1=get('T1-01'), m12=get('T1-12');
   const samsung=m1&&m1.model.match(/^SM-[A-Z]\d{3,4}([A-Z0-9]{0,3})$/i);
   if(isUS&&m12&&samsung&&samsung[1]&&!/^(U|W)/i.test(samsung[1]))
     concl.push({id:'T2-D',conf:'Likely',absorbs:['T1-01','T1-12'],
-      text:`Your phone’s model number marks it as an international version, not one sold by US carriers. Your device was most likely bought or set up outside the US.`});
+      text:`Your phone’s model number marks it as an international version, not one sold by US carriers. Your device was most likely bought or set up outside the US.`
+        +(primaryBase==='es'?' Among Hispanic adults in the US, 61% of immigrants mainly speak Spanish, compared with 8% of the US-born children of immigrants.':'')   // B-20 (Pew 2012; devlog 035)
+        +' Immigration enforcement has bought commercial location and advertising data, and in January 2026 ICE asked ad-tech companies for more. This is the kind of data that goes into it.'});   // R-05 (The Register 2026; devlog 035)
   const a24=get('T1-24'), a25=get('T1-25');
-  const mech=[...((a24&&a24.visual)||[]),...((a25&&a25.readingFonts)||[])];
-  const strong=mech.some(x=>x==='forced'||x==='inverted'||x==='OpenDyslexic');
-  if(mech.length>=2||strong){
-    const kinds=[]; if((a24&&a24.visual.length)||(a25&&a25.readingFonts.includes('Atkinson Hyperlegible'))) kinds.push('low vision'); if(a25&&a25.readingFonts.includes('OpenDyslexic')) kinds.push('dyslexia');
-    concl.push({id:'T2-E',conf:'Likely',absorbs:[a24,a25].filter(Boolean).map(s=>s.id),text:`Your settings indicate you likely have ${engList(kinds,'or')}.`});
-  }
+  // T2-E narrowed (devlog 037): low vision only, from the settings with a base rate (A-30). Forced colors alone, or increased
+  // contrast plus one other visual setting (inverted colors, Atkinson Hyperlegible). No dyslexia conclusion; T1-25 still shows.
+  const visE=(a24&&a24.visual)||[], hyper=!!(a25&&a25.readingFonts.includes('Atkinson Hyperlegible'));
+  if(visE.includes('forced')||(visE.includes('contrast')&&(visE.includes('inverted')||hyper)))
+    concl.push({id:'T2-E',conf:'Likely',absorbs:[a24,hyper?a25:null].filter(Boolean).map(s=>s.id),text:'Your settings indicate you likely have low vision.'});
   const pst=st.filter(s=>s.group==='P');
   const blocked=[...new Set(pst.flatMap(s=>s.blocking||[]))], requests=pst.reduce((n,s)=>n+(s.requests||0),0);
   if(blocked.length&&blocked.length+requests>=2){
@@ -1221,7 +1337,6 @@ function inferProfile(D){
   }
 
   // ── Assembly ──
-  const suppressed=[];
   if(concl.some(c=>c.id==='T2-A')&&concl.some(c=>c.id==='T2-B')){
     for(const id of ['T2-A','T2-B']){ concl.splice(concl.findIndex(c=>c.id===id),1); suppressed.push({id,reason:'contradicts '+(id==='T2-A'?'T2-B':'T2-A')+'; facts shown instead'}); }
   }
@@ -1242,29 +1357,48 @@ function inferProfile(D){
       text:`Your language and clock are both set for ${cn(homeCC)}, but you’re connecting from ${cn(ipCountry)}. You’re most likely traveling, or using a VPN this page couldn’t identify. Hotel and travel sites have been found to change prices depending on where you connect from.`});   // A-37
   }
   // T2-J · likely industry from the network (devlog 028, C-06): network type (I) + weekday working hours on a computer (T)
-  // School districts excluded pending the user's decision (PRODUCT.md → Review before building)
-  const IND={hospital:'healthcare',university:'higher education',government:'government',military:'the armed forces'};
+  // School districts (devlog 035): computer + weekday working hours only, and never a conclusion about a student
+  const IND={hospital:'healthcare',university:'higher education',government:'government',military:'the armed forces',school:'education'};
   if(p32&&IND[p32.providerType]&&t15&&t15.atWork)
     concl.push({id:'T2-J',conf:'Likely',absorbs:['T1-32','T1-15'],
       text:p32.providerType==='university'
         ?`On a university network on a weekday during working hours, on a computer: you most likely work or study in higher education.`
         :`On ${p32.orgName}’s network on a weekday during working hours, on a computer: you most likely work in ${IND[p32.providerType]}.`});
+  // T2-J area path (devlog 037, option B with the user's wording): premium device or professional software on a home connection
+  // in a low-income ZIP. No claim about the visitor's job; the advertiser sentence is unsourced, kept by the user's decision.
+  if(!concl.some(c=>c.id==='T2-J')&&areaInc&&areaInc.low&&(premium.length||paid.length||get('T1-18'))){
+    const top=engTopWageSector(Z,areaInc.zip);
+    if(top) concl.push({id:'T2-J',conf:'Likely',absorbs:[...premium,...paid].map(s=>s.id).concat(get('T1-18')?['T1-18']:[],hasT31?['T1-31']:[]),
+      text:`Your equipment is well above what’s typical for the area you’re connecting from, where the median household income is ${engMoney(areaInc.income,250001)} a year. The highest wages in this ZIP code are in the ${top} industry. It’s likely that advertisers will target you based on this information.`});
+  }
   // T2-L · how you'd be priced right now (devlog 028, C-03): documented practices from two or more groups
   const t36=get('T1-36'), t34=get('T1-34'), price=[];
   if(t36) price.push(['D','a Mac user']);   // T1-36's Orbitz sentence is absorbed into this paragraph
   else if(S.isMobile) price.push(['D','on a phone, and some shopping and travel sites have shown phone users different products']);   // A-37
   if(t34) price.push(['Z','your clock and connection disagree, which fraud systems flag']);   // B-18
-  if(new Set(price.map(x=>x[0])).size>=2)
+  if(areaInc&&areaInc.belowMedian) price.push(['I','you’re connecting from an area where online stores have offered fewer discounts']);   // A-04 (devlog 032)
+  if(new Set(price.map(x=>x[0])).size>=2){
     concl.push({id:'T2-L',conf:'Strong',absorbs:t36?['T1-36']:[],
       text:`Sites that adjust prices would read you like this: ${price.map(x=>x[1]).join('; ')}. None of this means this page, or any particular site, is charging you more.`});
+    const t31p=get('T1-31'); if(t31p&&t31p.a04&&price.some(x=>x[0]==='I')) t31p.text=t31p.text.replace(t31p.a04,'');   // said once, here
+  }
   // T2-M · your ad profile (devlog 028, M-10): labels from two or more groups
   const fT2F=concl.some(c=>c.id==='T2-F'), labels=[];
   if(get('T1-02')&&isUS) labels.push(['D','iPhone user: costs more to reach']);   // M-02
   if(p32&&p32.providerType==='other') labels.push(['I',`on ${p32.orgName}’s network`]);   // A-09
+  else if(areaInc) labels.push(['I',`Google Ads income tier: ${areaInc.tier}`]);   // M-03 (devlog 032; ACS income by ZIP)
+  if(primaryBase==='es'&&concl.some(c=>c.id==='T2-C')) labels.push(['L','Spanish speaker: Hispanic audience segments']);   // M-05 (devlog 035)
   if(fT2F) labels.push(['P','blocks trackers: harder to reach']);
-  if(new Set(labels.map(x=>x[0])).size>=2)
+  if(new Set(labels.map(x=>x[0])).size>=2){
+    const t31m=get('T1-31'); if(t31m&&t31m.m03&&labels.some(x=>/^Google Ads income tier/.test(x[1]))) t31m.text=t31m.text.replace(t31m.m03,'');   // said once, in T2-M (devlog 037)
     concl.push({id:'T2-M',conf:'Strong',absorbs:[],
       text:`Here’s roughly how an ad system would file you: ${labels.map(x=>x[1]).join(' · ')}. Brokers’ versions of labels like these are often wrong (in one test, their income guesses were right only 30–46% of the time), but they’re still used.`});
+  }
+  // T2-N · servicemember under financial strain (devlog 034, R-09; wording by the user): military network (I) + a tight-budget signal on a phone (D)
+  const t07=get('T1-07'), t08=get('T1-08');
+  if(p32&&p32.providerType==='military'&&S.isMobile&&(t07||t08))
+    concl.push({id:'T2-N',conf:'Likely',absorbs:['T1-32',...[t07,t08].filter(Boolean).map(s=>s.id)],
+      text:'On a military network, with a phone and settings that suggest you’re watching costs: this makes you a target for predatory organizations, like lenders and for-profit colleges.'});   // ~ CFPB (for-profit colleges ✓; lenders unverified)
   // T2-O · narrowed to a few people (devlog 028, R-01): organization network + city + a distinctive device or language
   const t31=get('T1-31'), m01=get('T1-01');
   const distinct=m01?`a phone that reports itself as ${m01.model}`:(primaryBase&&primaryBase!=='en'?`a browser set to ${engName(primaryBase,'language')}`:null);
@@ -1294,7 +1428,7 @@ function inferProfile(D){
 
 // ── PROFILE (page glue around the inference engine) ──
 let profileShown=false;
-function engineInput(){ return { S, X, B, N, cookies:{ vis } }; }
+function engineInput(){ return { S, X, B, N, Z, cookies:{ vis } }; }
 function escHtml(t){ return String(t).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 
 function buildProfile() {
@@ -1415,10 +1549,10 @@ function renderFingerprintBars() {
 // ── COOKIES ──
 function renderCookies() {
   const cks=[
-    {n:'Persistent ID',t:'Stored for 365 days',v:uid,i:'Links every visit you make — past and future — to a single continuous record.'},
-    {n:'Session ID',t:'Stored for 24 hours',v:sid,i:'Maps the sequence of this specific visit: which sections you read, how long you spent on each.'},
-    {n:'Visit counter',t:'Stored for 365 days',v:vis+' visit(s)',i:'Tracks how many times you have returned. Return visits command higher prices in advertising auctions.'},
-    {n:'Referrer',t:'Stored for 30 days',v:document.referrer||'direct',i:'Records where you came from. Sold back to advertisers as attribution data.'},
+    {n:'Browser ID',t:'Deleted when you close your browser',v:uid,i:'On a commercial site, a cookie like this usually lasts a year or more and links every visit you make to a single continuous record. This page deletes it when your browser closes.'},
+    {n:'Session ID',t:'Deleted when you close your browser',v:sid,i:'Maps the sequence of this specific visit: which sections you read, how long you spent on each.'},
+    {n:'Page-load counter',t:'Deleted when you close your browser',v:vis+' load(s) this session',i:'On a commercial site, a counter like this tracks how many times you return, and return visits command higher prices in advertising auctions. This one resets when your browser closes.'},
+    {n:'Referrer',t:'Deleted when you close your browser',v:document.referrer||'direct',i:'Records where you came from. Sold back to advertisers as attribution data.'},
   ];
   document.getElementById('cookieSection').innerHTML=cks.map(c=>
     `<div class="cookie-card"><div class="cookie-name">${c.n}</div><div class="cookie-type">${c.t}</div><div class="cookie-id">Your ID: ${c.v}</div><div class="cookie-impact">${c.i}</div></div>`
@@ -1470,7 +1604,7 @@ function renderCases(p) {
 // ── EVENT TRACKING ──
 function initEvents() {
   log('Page loaded — '+countSignals()+' device signals captured before first scroll.');
-  log('Persistent tracking ID set. Visit #'+vis+' recorded.');
+  log('Tracking ID set for this browser session.');
   log((S.canvas&&S.canvas!=='blocked' ? 'Canvas fingerprint captured, token '+S.canvas.slice(0,8)+'.' : 'Canvas fingerprint blocked.')
     +' '+(S.audio&&S.audio!=='blocked' ? 'Audio fingerprint captured, signature '+S.audio.slice(0,10)+'.' : 'Audio fingerprint blocked.'));
   if(S.webrtc&&S.webrtc.length) log('WebRTC IP leak: '+S.webrtc.join(', '));
