@@ -54,6 +54,7 @@ Deferred until the engine is configured and tested:
 - **Canvas fingerprint:** placeholder bar values, browser-specific incognito claim, raw-pixel hashing
 - **Tone, structure and the "increase impact" review**
 - **Hosting** (switch the IP lookup to a server function at the host): parked until hosting is on the table
+- **Live log panel:** hidden for now (devlog 049); the "Live record — logged while you read" corner box still runs underneath. Come back to it.
 
 ### Showing it with impact
 - Find impactful ways to present what we've learned back to the user

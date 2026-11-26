@@ -1059,4 +1059,23 @@ A record of each instruction exchange. Newest entries at the bottom.
 **Executed:**
 - Committed `CLAUDE.md` and `claude-devlog.md`; pushed `main` to `origin`.
 
-**Verdict:** (pending)
+**Verdict:** Fulfilled. ("Yes")
+
+## 049 · Hide the live log panel
+**Date:** 2026-11-26
+
+**Instruction:** "can you remove the logger for now?"
+
+**Interpretations:**
+1. Remove the "Live record — logged while you read" corner panel: its markup, styles, the `log()` function and its 12 calls. Recorders and engine untouched; other "live" labels stay; note in `PRODUCT.md` that it could return.
+   - *User:* "hide it. we'll come back to it later."
+2. Hide the panel with one CSS rule and leave its code running, so it can be switched back on. Note in `PRODUCT.md` → Front-end pass.
+   - *Confirmed.*
+
+**Confirmed intent:** Interpretation 2.
+
+**Executed:**
+- `index.html`: added `#livePanel{display:none}` after the panel's styles; markup, `log()` and its calls unchanged.
+- `PRODUCT.md` → Front-end pass: "Live log panel" item, hidden for now, to revisit.
+
+**Verdict:** Fulfilled. ("Yes, it did.")

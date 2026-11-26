@@ -23,6 +23,7 @@ html,body{background:var(--bg);color:var(--ink);font-family:'Inter',sans-serif;o
 #livePanelLog .log-line{padding:1px 0;border-bottom:1px solid rgba(240,236,228,0.04)}
 #livePanelLog .log-line:last-child{border-bottom:none}
 @media(max-width:600px){#livePanel{width:180px;top:1rem;right:1rem;padding:0.4rem 0.75rem}}
+#livePanel{display:none}   /* hidden for now (devlog 049); the log keeps running underneath */
 
 .hero{min-height:96vh;display:flex;flex-direction:column;justify-content:center;padding:5rem 2.5rem;border-bottom:1px solid var(--rule-strong);background:radial-gradient(ellipse at 65% 40%,rgba(233,69,96,0.07) 0%,transparent 60%)}
 .hero-eyebrow{font-family:'DM Mono',monospace;font-size:0.65rem;letter-spacing:0.18em;text-transform:uppercase;color:var(--accent);margin-bottom:2.5rem;display:flex;align-items:center;gap:0.75rem}
