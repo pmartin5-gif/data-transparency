@@ -37,6 +37,7 @@ Start here when resuming. First read `PRODUCT.md`, `inference-map.md` (incl. "Im
 
 - **Local recorders keep nothing beyond a single session.** Data recorded about a visitor (`simGA`, `B`, `X` and any future recorder) stays in page memory only: never written to cookies, localStorage, IndexedDB or a server. The page's own demonstration cookies are a separate question, flagged in `PRODUCT.md` to revisit.
 - **Check outside services against the project's purpose.** Before proposing any third party that would receive visitor data, check whether it logs, sells or shares that data, or is a registered data broker, and flag any conflict with the project's purpose. Cost and convenience come second (devlog 015).
+- **`README.md` is updated only at major milestones, when the user says so.** Don't update it as part of routine work (devlog 040).
 
 ## Files
 

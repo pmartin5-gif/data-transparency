@@ -879,3 +879,40 @@ A record of each instruction exchange. Newest entries at the bottom.
 - `CLAUDE.md`: "Next, in order (set 2026-11-26)" rewritten as above
 
 **Verdict:** Fulfilled. ("Yes")
+
+## 039 · README for outside readers
+**Date:** 2026-11-26
+
+**Instruction:** Before moving on to testing, create a human-readable `README.md` in the project folder: an overview of the project, background on the workflow the user and Claude have been using, and a map of the files and folders.
+
+**Interpretations:**
+1. New root `README.md` for outside readers: project overview (what the page does, AI-free engine, privacy commitments, status, how to view), how we work (question/instruction loop, devlog, Learnings), and a file map. No other files changed.
+   - *Correction:* reframe the purpose at the highest level: a web-based system that reflects to users the data routinely collected from them and why it matters, using an AI-free inference engine to correlate that data against freely available databases, to raise awareness of data privacy concerns.
+2. Overview leads with what it is, how it works and why; commitments, status and viewing become a secondary layer. Other sections unchanged.
+   - *Correction:* add an impactful thesis statement at the very top, interpreted from the user's intent (data privacy poorly understood; the scale of routine and third-party collection; "nothing to hide" fails for marginalized groups whose status can change overnight; immigrants and women seeking reproductive healthcare at risk; the project makes the collection and its dangers visible).
+3. Drafted a thesis statement for review.
+   - *Correction:* the user supplied the final wording.
+
+**Confirmed intent:** Interpretation 2 plus the user's thesis statement at the top.
+
+**Executed:**
+- Created `README.md`: thesis (user's wording; "term" added to "is a often used", matching the user's earlier phrasing), project overview, how the engine works, privacy commitments, status, viewing instructions, how we work, file tree and reading guide. The author is unnamed ("its author").
+
+**Verdict:** Fulfilled. ("Yes")
+
+## 040 · README trims; milestone-only updates
+**Date:** 2026-11-26
+
+**Instruction:** Remove the "How the engine works" section from the README, retitle "How we work" to "How This Project Was Built", and don't update the README regularly: only at really big milestones, which the user will announce.
+
+**Interpretations:**
+1. `README.md`: delete the "How the engine works" subsection; rename "How we work" to "How This Project Was Built", text unchanged. Record the milestone-only rule as one line under "Project rules" in `CLAUDE.md` so later sessions know it.
+   - *Confirmed.*
+
+**Confirmed intent:** Interpretation 1.
+
+**Executed:**
+- `README.md`: "How the engine works" removed; "How we work" → "How This Project Was Built"
+- `CLAUDE.md` → Project rules: added the milestone-only README rule
+
+**Verdict:** Fulfilled. ("yes")
